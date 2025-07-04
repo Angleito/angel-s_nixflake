@@ -2,7 +2,24 @@
 
 set -e
 
-echo "Setting up nix-darwin environment..."
+echo "=================================================="
+echo "🚀 Starting complete nix-darwin setup..."
+echo "=================================================="
+echo ""
+
+# Check if Nix is installed
+if ! command -v nix &> /dev/null; then
+    echo "❌ Nix is not installed!"
+    echo ""
+    echo "Please install Nix first:"
+    echo "sh <(curl -L https://nixos.org/nix/install)"
+    echo ""
+    echo "After installation, restart your terminal and run this script again."
+    exit 1
+fi
+
+echo "✓ Nix is installed"
+echo ""
 
 # Check if .env file exists, if not prompt user to create it
 if [ ! -f ".env" ]; then
@@ -98,22 +115,68 @@ echo ""
 echo "✅ Setup complete!"
 echo ""
 
+# Install Homebrew if not already installed (required for casks)
+if ! command -v brew &> /dev/null; then
+    echo "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    
+    # Add Homebrew to PATH for this session
+    if [[ "$(uname -m)" == "arm64" ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+else
+    echo "Homebrew is already installed"
+fi
+
 # Check if nix-darwin is already installed
 if ! command -v darwin-rebuild &> /dev/null; then
+    echo ""
     echo "Installing nix-darwin..."
+    echo "This will:"
+    echo "  - Install nix-darwin"
+    echo "  - Install all specified applications (Warp, Cursor, Brave, Orbstack)"
+    echo "  - Configure your system with the settings in darwin-configuration.nix"
+    echo "  - Set up home-manager with your user packages"
+    echo ""
+    
+    # First build of nix-darwin
     nix --extra-experimental-features 'nix-command flakes' run nix-darwin -- switch --flake .
+    
     echo "nix-darwin installed successfully!"
+    echo ""
+    echo "Reloading shell environment..."
+    source ~/.zshrc
 else
     echo "nix-darwin is already installed"
+    echo "Running darwin-rebuild to ensure all apps are installed..."
+    darwin-rebuild switch --flake .
 fi
 
 echo ""
-echo "Next steps:"
-echo "1. Ensure your .env file contains the correct values"
-echo "2. Restart your shell or run: source ~/.zshrc"
-echo "3. Run 'rebuild' (alias) or 'darwin-rebuild switch --flake .' to apply changes"
+echo "=================================================="
+echo "✅ Installation Complete!"
+echo "=================================================="
 echo ""
-echo "To customize your setup:"
-echo "- Edit darwin-configuration.nix to add/remove system apps (casks)"
-echo "- Edit home.nix to add/remove user packages"
-echo "- Run 'rebuild' after making changes"
+echo "Installed applications:"
+echo "  • Warp - AI-powered terminal"
+echo "  • Cursor - AI code editor"
+echo "  • Brave Browser - Privacy-focused browser"
+echo "  • Orbstack - Docker/container management"
+echo ""
+echo "Installed development tools:"
+echo "  • Node.js, Python, Go, Rust"
+echo "  • Git, GitHub CLI, Lazygit"
+echo "  • Docker, Docker Compose"
+echo "  • Modern CLI tools (ripgrep, fzf, bat, etc.)"
+echo ""
+echo "Next steps:"
+echo "1. Restart your terminal or run: source ~/.zshrc"
+echo "2. Your apps should be available in /Applications"
+echo "3. Use 'rebuild' alias to apply any future changes"
+echo ""
+echo "To customize:"
+echo "  • Edit darwin-configuration.nix for system apps"
+echo "  • Edit home.nix for CLI tools and packages"
+echo "  • Run 'rebuild' after making changes"
