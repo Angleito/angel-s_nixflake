@@ -49,6 +49,8 @@
     casks = [
       "warp"           # Warp terminal
       "cursor"         # Cursor AI editor
+      "brave-browser"  # Brave browser
+      "orbstack"       # Docker/container management
     ];
     
     # Mac App Store apps (requires 'mas' brew)
