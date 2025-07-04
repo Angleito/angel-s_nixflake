@@ -36,5 +36,22 @@
         }
       ];
     };
+    
+    # Development shells for direnv
+    devShells.aarch64-darwin.default = let
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+    in pkgs.mkShell {
+      buildInputs = with pkgs; [
+        # Add any development tools you need here
+        # For example:
+        # git
+        # curl
+        # jq
+      ];
+      
+      shellHook = ''
+        echo "Welcome to your Nix development environment!"
+      '';
+    };
   };
 }
