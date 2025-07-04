@@ -25,7 +25,29 @@
     git
     curl
     wget
+    nodejs_20  # Include Node.js for npm
   ];
+  
+  # System-wide npm configuration and Claude Code CLI installation
+  system.activationScripts.postActivation.text = ''
+    # Configure npm globally for all users
+    export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/nix/var/nix/profiles/default/bin"
+    
+    # Create npm global directory for the primary user
+    sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.npm-global
+    
+    # Configure npm to use global directory for the primary user
+    sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm config set prefix /Users/${config.system.primaryUser}/.npm-global
+    
+    # Install Claude Code CLI globally
+    if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.npm-global/bin/claude; then
+      echo "Installing Claude Code CLI system-wide..."
+      sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm install -g @anthropic-ai/claude-code
+      echo "Claude Code CLI installed successfully!"
+    else
+      echo "Claude Code CLI is already installed system-wide"
+    fi
+  '';
 
   # Homebrew configuration
   homebrew = {

@@ -139,6 +139,8 @@ if ! command -v darwin-rebuild &> /dev/null; then
     echo "  - Install all specified applications (Warp, Cursor, Brave, Orbstack)"
     echo "  - Configure your system with the settings in darwin-configuration.nix"
     echo "  - Set up home-manager with your user packages"
+    echo "  - Install Node.js and configure npm globally"
+    echo "  - Install Claude Code CLI system-wide"
     echo ""
     
     # First build of nix-darwin
