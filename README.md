@@ -60,6 +60,7 @@ This configuration implements several privacy safeguards to protect your persona
 - **Languages:** Node.js, Python, Go, Rust
 - **Version Control:** Git, GitHub CLI, Lazygit
 - **Containers:** Docker, Docker Compose
+- **AI Tools:** Claude Code CLI
 - **CLI Tools:** ripgrep, fzf, bat, exa, htop, and more
 - **Shell:** Zsh with autosuggestions, syntax highlighting, and Starship prompt
 

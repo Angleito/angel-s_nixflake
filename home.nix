@@ -122,4 +122,31 @@
       # Add VS Code extensions here
     ];
   };
+
+  # Set up npm global packages
+  home.file.".npmrc".text = ''
+    prefix = ''${HOME}/.npm-global
+  '';
+
+  # Add npm global bin to PATH
+  home.sessionPath = [
+    "$HOME/.npm-global/bin"
+  ];
+
+  # Install global npm packages via activation script
+  home.activation.installNpmPackages = config.lib.dag.entryAfter ["writeBoundary"] ''
+    export PATH="${config.home.path}/bin:$PATH"
+    export PATH="$HOME/.npm-global/bin:$PATH"
+    
+    # Create npm global directory
+    mkdir -p $HOME/.npm-global
+    
+    # Install Claude Code CLI
+    if ! command -v claude-code &> /dev/null; then
+      echo "Installing Claude Code CLI..."
+      ${pkgs.nodejs_20}/bin/npm install -g @anthropic-ai/claude-code
+    else
+      echo "Claude Code CLI is already installed"
+    fi
+  '';
 }
