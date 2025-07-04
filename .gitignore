@@ -1,2 +1,5 @@
 # Environment files
 .env
+
+# Nix build result
+result

@@ -60,9 +60,10 @@ This configuration implements several privacy safeguards to protect your persona
 - **Languages:** Node.js, Python, Go, Rust
 - **Version Control:** Git, GitHub CLI, Lazygit
 - **Containers:** Docker, Docker Compose
-- **AI Tools:** Claude Code CLI
-- **CLI Tools:** ripgrep, fzf, bat, exa, htop, and more
+- **AI Tools:** Claude Code CLI (`@anthropic-ai/claude-code`)
+- **CLI Tools:** ripgrep, fzf, bat, eza, htop, and more
 - **Shell:** Zsh with autosuggestions, syntax highlighting, and Starship prompt
+- **Package Management:** npm configured globally in user directory
 
 ## 🔧 Configuration
 
@@ -108,6 +109,7 @@ direnv allow && rebuild
 - `update` - Update all flake inputs to latest versions
 - `direnv allow` - Reload environment variables
 - `darwin-rebuild switch --flake .` - Full rebuild command
+- `claude` - Claude Code CLI (automatically installed)
 
 ## 📁 Project Structure
 
@@ -132,6 +134,8 @@ direnv allow && rebuild
 - Personal information is injected at build time only
 - CI/CD systems use placeholder values
 - SSH keys are generated locally and stored in macOS Keychain
+- npm global packages installed in user directory (no sudo required)
+- Nix build results (`result` symlink) are git-ignored
 
 ## 🆘 Troubleshooting
 
