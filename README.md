@@ -132,12 +132,11 @@ Pre-configured Model Context Protocol servers provide enhanced capabilities:
 #### Basic Servers
 - **Filesystem** - Access to ~/Projects, ~/Documents, and home directory
 - **Memory** - Persistent memory across conversations
-- **Fetch** - Web content retrieval capabilities
 - **Sequential Thinking** - Enhanced reasoning capabilities
 
 #### Browser Automation
 - **Puppeteer** - Browser automation with Puppeteer
-- **Playwright** - Browser automation with Playwright (cross-browser support)
+- **Playwright** - Official Microsoft Playwright MCP server (cross-browser support)
 
 #### Search & AI Tools (mcp-omnisearch)
 - **Search Engines**: Tavily, Brave, and Kagi search

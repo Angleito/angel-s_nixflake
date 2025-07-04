@@ -166,11 +166,6 @@
         args = ["-y" "@modelcontextprotocol/server-memory"];
       };
       
-      fetch = {
-        command = "npx";
-        args = ["-y" "@modelcontextprotocol/server-fetch"];
-      };
-      
       sequential-thinking = {
         command = "npx";
         args = ["-y" "@modelcontextprotocol/server-sequential-thinking"];
@@ -184,7 +179,7 @@
       
       playwright = {
         command = "npx";
-        args = ["-y" "@modelcontextprotocol/server-playwright"];
+        args = ["-y" "@microsoft/mcp-server-playwright"];
       };
       
       # Omnisearch server - combines multiple search and AI tools

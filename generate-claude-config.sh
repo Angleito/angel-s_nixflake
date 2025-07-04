@@ -31,10 +31,6 @@ cat > ~/.claude.json << EOF
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-memory"]
     },
-    "fetch": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-fetch"]
-    },
     "sequential-thinking": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
@@ -45,7 +41,7 @@ cat > ~/.claude.json << EOF
     },
     "playwright": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-playwright"]
+      "args": ["-y", "@microsoft/mcp-server-playwright"]
     },
     "mcp-omnisearch": {
       "command": "npx",
