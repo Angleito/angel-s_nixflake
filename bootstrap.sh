@@ -43,6 +43,14 @@ if ! sudo darwin-rebuild switch --flake .#$HOSTNAME; then
     exit 1
 fi
 
+# Generate Claude Code configuration with environment variables
+echo "🤖 Setting up Claude Code configuration..."
+if [ -f "./generate-claude-config.sh" ]; then
+    ./generate-claude-config.sh
+else
+    echo "⚠️  Claude configuration script not found, skipping..."
+fi
+
 echo "✅ Setup complete!"
 echo ""
 echo "Claude Code is now configured with:"
