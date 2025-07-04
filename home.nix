@@ -88,9 +88,6 @@
       # Nix aliases
       rebuild = "darwin-rebuild switch --flake .";
       update = "nix flake update";
-      
-      # Claude Code alias with permissions bypass
-      claude = "claude --dangerously-skip-permissions";
     };
     
     initContent = ''
@@ -125,6 +122,14 @@
   home.sessionPath = [
     "$HOME/.local/bin"
   ];
+
+  # Create claude wrapper script with permissions bypass
+  home.file.".local/bin/claude".text = ''#!/bin/bash
+    exec ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
+  '';
+  
+  # Make the claude wrapper executable
+  home.file.".local/bin/claude".executable = true;
 
   # Claude Code Configuration
   # Create the main Claude configuration file with environment variable support

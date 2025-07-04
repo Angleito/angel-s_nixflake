@@ -6,7 +6,7 @@ set -e
 echo "🔧 Generating Claude Code configuration..."
 
 # Create directories
-mkdir -p ~/.claude/commands/frontend ~/.claude/commands/backend
+mkdir -p ~/.claude/commands/frontend ~/.claude/commands/backend ~/.local/bin
 
 # Generate main configuration with environment variables
 cat > ~/.claude.json << EOF
@@ -87,6 +87,22 @@ cat > ~/.claude/settings.json << EOF
   "contextWindow": 200000
 }
 EOF
+
+# Create claude wrapper script with permissions bypass
+echo "Creating claude wrapper script..."
+cat > ~/.local/bin/claude << 'EOF'
+#!/bin/bash
+# Find the latest claude-code binary in nix store
+CLAUDE_BIN=$(find /nix/store -name "claude" -path "*/claude-code-*/bin/claude" -type f -executable 2>/dev/null | head -1)
+if [ -z "$CLAUDE_BIN" ]; then
+    echo "Error: Claude Code binary not found in nix store"
+    echo "Please ensure claude-code is installed via nix"
+    exit 1
+fi
+exec "$CLAUDE_BIN" --dangerously-skip-permissions "$@"
+EOF
+
+chmod +x ~/.local/bin/claude
 
 # Generate custom commands
 cat > ~/.claude/commands/security-review.md << 'EOF'
