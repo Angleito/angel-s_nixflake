@@ -91,6 +91,9 @@
     };
     
     initExtra = ''
+      # Add npm global bin to PATH
+      export PATH="$HOME/.npm-global/bin:$PATH"
+      
       # Starship prompt
       eval "$(starship init zsh)"
       
@@ -125,18 +128,29 @@
     "$HOME/.npm-global/bin"
   ];
 
-  # Install global npm packages via activation script
-  home.activation.installNpmPackages = config.lib.dag.entryAfter ["writeBoundary"] ''
+  # Configure npm globally on first activation
+  home.activation.configureNpm = config.lib.dag.entryAfter ["writeBoundary"] ''
     export PATH="${config.home.path}/bin:$PATH"
-    export PATH="$HOME/.npm-global/bin:$PATH"
     
     # Create npm global directory
     mkdir -p $HOME/.npm-global
     
+    # Configure npm to use global directory
+    ${pkgs.nodejs_20}/bin/npm config set prefix $HOME/.npm-global
+    
+    echo "npm configured to use ~/.npm-global for global packages"
+  '';
+  
+  # Install global npm packages
+  home.activation.installNpmPackages = config.lib.dag.entryAfter ["configureNpm"] ''
+    export PATH="${config.home.path}/bin:$PATH"
+    export PATH="$HOME/.npm-global/bin:$PATH"
+    
     # Install Claude Code CLI
-    if ! command -v claude-code &> /dev/null; then
-      echo "Installing Claude Code CLI..."
+    if ! command -v claude &> /dev/null; then
+      echo "Installing Claude Code CLI (@anthropic-ai/claude-code)..."
       ${pkgs.nodejs_20}/bin/npm install -g @anthropic-ai/claude-code
+      echo "Claude Code CLI installed successfully!"
     else
       echo "Claude Code CLI is already installed"
     fi
