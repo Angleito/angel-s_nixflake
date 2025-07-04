@@ -108,6 +108,12 @@ EOF
 
 chmod +x ~/.local/bin/claude
 
+# Ensure ~/.local/bin is in PATH for new terminals
+if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' ~/.zshrc 2>/dev/null; then
+    echo 'Adding ~/.local/bin to PATH in ~/.zshrc...'
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+fi
+
 # Generate custom commands
 cat > ~/.claude/commands/security-review.md << 'EOF'
 ---

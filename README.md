@@ -301,9 +301,10 @@ sh <(curl -L https://nixos.org/nix/install)
 chmod +x install.sh
 ```
 
-**Claude command not found:**
-- The `claude` command automatically refreshes the shell cache
-- If issues persist, restart your terminal or run `direnv reload`
+**Claude command not found in new terminals:**
+- The setup automatically adds `~/.local/bin` to your PATH in `~/.zshrc`
+- If issues persist, run: `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc`
+- Then restart your terminal or run `source ~/.zshrc`
 
 **Apps not appearing after install:**
 - Restart your terminal
