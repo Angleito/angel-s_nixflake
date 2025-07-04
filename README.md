@@ -1,6 +1,6 @@
-# Angel's Nix Darwin Configuration
+# Angel's Nix Darwin Configuration with Claude Code
 
-A complete macOS system configuration using Nix Darwin and Home Manager. This setup allows you to automatically install and configure your entire development environment with a single command.
+A complete macOS system configuration using Nix Darwin and Home Manager with **comprehensive Claude Code integration**. This setup allows you to automatically install and configure your entire development environment, including a fully configured Claude Code environment with custom commands and MCP servers, with a single command.
 
 ## Privacy Safeguards
 
@@ -35,9 +35,9 @@ This configuration implements several privacy safeguards to protect your persona
    cd angel-s_nixflake
    ```
 
-2. **Run the install script:**
+2. **Run the bootstrap script:**
    ```bash
-   ./install.sh
+   ./bootstrap.sh
    ```
 
    The script will:
@@ -45,8 +45,16 @@ This configuration implements several privacy safeguards to protect your persona
    - Set up your personal environment variables
    - Install all required dependencies
    - Configure your system automatically
+   - Install Claude Code from nixpkgs
+   - Set up complete Claude Code configuration with custom commands
+   - Configure MCP servers for enhanced capabilities
 
 3. **Restart your terminal** to load the new configuration
+
+4. **Start Claude Code:**
+   ```bash
+   claude
+   ```
 
 ## 📦 What Gets Installed
 
@@ -61,11 +69,127 @@ This configuration implements several privacy safeguards to protect your persona
 - **Version Control:** Git, GitHub CLI, Lazygit
 - **Containers:** Docker, Docker Compose
 - **AI Tools:**
-  - Claude Code CLI (`@anthropic-ai/claude-code`)
-  - Sui CLI, Walrus CLI, Sei CLI
+  - **Claude Code CLI** (from nixpkgs) - Complete configuration with custom commands
+  - Sui CLI, Walrus CLI, Sei CLI (npm-based)
 - **CLI Tools:** ripgrep, fzf, bat, eza, htop, and more
 - **Shell:** Zsh with autosuggestions, syntax highlighting, and Starship prompt
 - **Package Management:** npm configured globally in user directory
+
+## 🤖 Claude Code Configuration
+
+This setup includes a complete Claude Code configuration with custom slash commands and MCP servers.
+
+### Custom Slash Commands
+
+The following custom commands are automatically available:
+
+- **`/user:security-review`** - Comprehensive security audit of codebase
+  - Runs `npm audit`
+  - Scans for hardcoded secrets
+  - Reviews authentication logic
+  - Checks for SQL injection vulnerabilities
+  - Validates input sanitization
+
+- **`/user:optimize`** - Code performance analysis and optimization
+  - Analyzes current git status and recent commits
+  - Runs existing tests and benchmarks
+  - Identifies performance bottlenecks
+  - Provides specific optimization suggestions
+
+- **`/user:deploy`** - Smart deployment with comprehensive checks
+  - Pre-deployment validation (tests, build, security)
+  - Branch-based deployment strategy
+  - Requires explicit confirmation for production
+
+- **`/user:debug`** - Systematic debugging with context analysis
+  - Analyzes recent git changes
+  - Searches for error logs
+  - Reviews dependencies and configuration
+  - Provides step-by-step debugging approach
+
+- **`/user:frontend:component`** - React/Vue component generator
+  - Creates TypeScript components with proper typing
+  - Includes styling and prop validation
+  - Generates unit tests
+  - Follows project style guide
+
+- **`/user:backend:api`** - API endpoint generator
+  - Creates endpoints with input validation
+  - Includes proper error handling
+  - Adds authentication/authorization
+  - Generates comprehensive tests
+
+- **`/user:research`** - Comprehensive research using multiple search engines and AI tools
+  - Queries multiple search engines (Tavily, Brave, Kagi)
+  - Uses AI analysis (Perplexity AI)
+  - Content processing and summarization
+  - Provides actionable insights with source attribution
+
+### MCP Servers
+
+Pre-configured Model Context Protocol servers provide enhanced capabilities:
+
+#### Basic Servers
+- **Filesystem** - Access to ~/Projects, ~/Documents, and home directory
+- **Memory** - Persistent memory across conversations
+- **Fetch** - Web content retrieval capabilities
+- **Sequential Thinking** - Enhanced reasoning capabilities
+
+#### Browser Automation
+- **Puppeteer** - Browser automation with Puppeteer
+- **Playwright** - Browser automation with Playwright (cross-browser support)
+
+#### Search & AI Tools (mcp-omnisearch)
+- **Search Engines**: Tavily, Brave, and Kagi search
+- **AI Response Tools**: Perplexity AI and Kagi FastGPT
+- **Content Processing**: Jina AI Reader, Kagi Summarizer, Firecrawl
+- **Unified Interface**: Single server combining multiple search and AI capabilities
+
+### API Key Configuration
+
+MCP servers that require API keys are automatically configured from environment variables:
+
+1. **Edit your `.env` file** (created during setup):
+   ```bash
+   # Add your API keys (all optional)
+   TAVILY_API_KEY="your-tavily-key"
+   BRAVE_API_KEY="your-brave-key"
+   KAGI_API_KEY="your-kagi-key"
+   PERPLEXITY_API_KEY="your-perplexity-key"
+   JINA_AI_API_KEY="your-jina-key"
+   FIRECRAWL_API_KEY="your-firecrawl-key"
+   ```
+
+2. **Rebuild your configuration**:
+   ```bash
+   direnv allow && rebuild
+   ```
+
+**Note**: All API keys are optional. The mcp-omnisearch server will work with whichever services you have API keys for.
+
+### Configuration Files
+
+Claude Code configuration is automatically created:
+
+- `~/.claude.json` - Main configuration with MCP servers and global settings
+- `~/.claude/commands/` - Directory containing all custom slash commands
+- `~/.claude/settings.json` - Advanced settings with security defaults
+
+### Usage Examples
+
+```bash
+# Start Claude Code
+claude
+
+# Use custom commands in Claude Code
+> /user:security-review
+> /user:optimize src/performance.js
+> /user:research "Next.js 14 performance optimization"
+> /user:frontend:component UserProfile
+> /user:backend:api user-management
+> /user:deploy
+> /user:debug "authentication not working"
+```
 
 ## 🔧 Configuration
 
@@ -107,12 +231,25 @@ direnv allow && rebuild
 
 ## 🛠️ Useful Commands
 
+### System Management
 - `rebuild` - Apply system configuration changes
 - `update` - Update all flake inputs to latest versions
 - `direnv allow` - Reload environment variables
 - `darwin-rebuild switch --flake .` - Full rebuild command
-- `claude` - Claude Code CLI (automatically installed)
-- `sui`, `walrus`, `sei` - Sui, Walrus, and Sei CLI tools (automatically installed)
+- `./bootstrap.sh` - Complete setup from scratch
+
+### Claude Code
+- `claude` - Start Claude Code CLI (installed from nixpkgs)
+- `/user:security-review` - Run security audit
+- `/user:optimize [files]` - Analyze and optimize performance
+- `/user:deploy` - Smart deployment with checks
+- `/user:debug [issue]` - Systematic debugging
+- `/user:research [topic]` - Comprehensive research using multiple search engines
+- `/user:frontend:component [name]` - Generate React/Vue component
+- `/user:backend:api [name]` - Generate API endpoint
+
+### Other CLI Tools
+- `sui`, `walrus`, `sei` - Blockchain CLI tools (npm-based)
 
 ## 📁 Project Structure
 

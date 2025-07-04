@@ -29,7 +29,7 @@
     claude-code   # NEW – install from nixpkgs instead of npm
   ];
   
-  # System-wide npm configuration and Claude Code CLI installation
+  # System-wide npm configuration for other CLI tools
   system.activationScripts.postActivation.text = ''
     # Configure npm globally for all users
     export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/nix/var/nix/profiles/default/bin"

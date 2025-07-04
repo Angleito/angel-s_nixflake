@@ -91,8 +91,8 @@
     };
     
     initContent = ''
-      # Add npm global bin and local bin to PATH
-      export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
+      # Add local bin to PATH
+      export PATH="$HOME/.local/bin:$PATH"
       
       # Starship prompt
       eval "$(starship init zsh)"
@@ -118,42 +118,316 @@
     };
   };
 
-  # Set up npm global packages
-  home.file.".npmrc".text = ''
-    prefix = ''${HOME}/.npm-global
-  '';
-
-  # Add npm global bin and local bin to PATH
+  # Add local bin to PATH (npm global no longer needed since claude-code is from nix)
   home.sessionPath = [
-    "$HOME/.npm-global/bin"
     "$HOME/.local/bin"
   ];
 
-  # Configure npm globally on first activation
-  home.activation.configureNpm = config.lib.dag.entryAfter ["writeBoundary"] ''
-    export PATH="${config.home.path}/bin:$PATH"
+  # Claude Code Configuration
+  # Create the main Claude configuration file with environment variable support
+  home.file.".claude.json".text = let
+    # Read environment variables with fallbacks
+    tavilyKey = builtins.getEnv "TAVILY_API_KEY";
+    braveKey = builtins.getEnv "BRAVE_API_KEY";
+    kagiKey = builtins.getEnv "KAGI_API_KEY";
+    perplexityKey = builtins.getEnv "PERPLEXITY_API_KEY";
+    jinaKey = builtins.getEnv "JINA_AI_API_KEY";
+    firecrawlKey = builtins.getEnv "FIRECRAWL_API_KEY";
+  in builtins.toJSON {
+    numStartups = 0;
+    autoUpdaterStatus = "enabled";
+    theme = "dark";
+    hasCompletedOnboarding = true;
     
-    # Create npm global directory
-    mkdir -p $HOME/.npm-global
+    # Global MCP servers - available to all projects
+    mcpServers = {
+      # Basic MCP servers
+      filesystem = {
+        command = "npx";
+        args = [
+          "-y"
+          "@modelcontextprotocol/server-filesystem"
+          "/Users/${config.home.username}"
+          "/Users/${config.home.username}/Projects"
+          "/Users/${config.home.username}/Documents"
+        ];
+      };
+      
+      memory = {
+        command = "npx";
+        args = ["-y" "@modelcontextprotocol/server-memory"];
+      };
+      
+      fetch = {
+        command = "npx";
+        args = ["-y" "@modelcontextprotocol/server-fetch"];
+      };
+      
+      sequential-thinking = {
+        command = "npx";
+        args = ["-y" "@modelcontextprotocol/server-sequential-thinking"];
+      };
+      
+      # Browser automation servers
+      puppeteer = {
+        command = "npx";
+        args = ["-y" "@modelcontextprotocol/server-puppeteer"];
+      };
+      
+      playwright = {
+        command = "npx";
+        args = ["-y" "@modelcontextprotocol/server-playwright"];
+      };
+      
+      # Omnisearch server - combines multiple search and AI tools
+      mcp-omnisearch = {
+        command = "npx";
+        args = ["-y" "mcp-omnisearch"];
+        env = {
+          TAVILY_API_KEY = if tavilyKey != "" then tavilyKey else "";
+          BRAVE_API_KEY = if braveKey != "" then braveKey else "";
+          KAGI_API_KEY = if kagiKey != "" then kagiKey else "";
+          PERPLEXITY_API_KEY = if perplexityKey != "" then perplexityKey else "";
+          JINA_AI_API_KEY = if jinaKey != "" then jinaKey else "";
+          FIRECRAWL_API_KEY = if firecrawlKey != "" then firecrawlKey else "";
+        };
+      };
+    };
     
-    # Configure npm to use global directory
-    ${pkgs.nodejs_20}/bin/npm config set prefix $HOME/.npm-global
+    # Example project-specific configuration
+    projects = {
+      # This will be populated by individual projects
+    };
+  };
+
+  # Create the Claude commands directory structure
+  home.file.".claude/commands/.keep".text = "";
+  
+  # Global Custom Slash Commands
+  home.file.".claude/commands/security-review.md".text = ''
+    ---
+    allowed-tools: Bash(npm audit), Bash(git:*), Read, Grep
+    description: Comprehensive security review of codebase
+    ---
     
-    echo "npm configured to use ~/.npm-global for global packages"
+    # Security Review Command
+    
+    Perform a comprehensive security review of this codebase:
+    
+    1. **Dependency audit**: !`npm audit`
+    2. **Check for hardcoded secrets**: !`grep -r "password\|secret\|token\|key" . --exclude-dir=node_modules --exclude-dir=.git`
+    3. **Review authentication logic**: Focus on @auth/ directory if present
+    4. **Check for SQL injection vulnerabilities**
+    5. **Validate input sanitization** 
+    6. **Review CORS and security headers**
+    
+    Provide actionable recommendations for each finding with specific code examples.
   '';
   
-  # Install global npm packages
-  home.activation.installNpmPackages = config.lib.dag.entryAfter ["configureNpm"] ''
-    export PATH="${config.home.path}/bin:$PATH"
-    export PATH="$HOME/.npm-global/bin:$PATH"
+  home.file.".claude/commands/optimize.md".text = ''
+    ---
+    allowed-tools: Bash(npm:*), Bash(git:*), Read, Edit, MultiEdit, Grep
+    description: Analyze and optimize code performance
+    ---
     
-    # Install Claude Code CLI
-    if ! command -v claude &> /dev/null; then
-      echo "Installing Claude Code CLI (@anthropic-ai/claude-code)..."
-      ${pkgs.nodejs_20}/bin/npm install -g @anthropic-ai/claude-code
-      echo "Claude Code CLI installed successfully!"
-    else
-      echo "Claude Code CLI is already installed"
-    fi
+    # Code Optimization Command
+    
+    Analyze this code for performance issues and suggest optimizations:
+    
+    ## Context
+    - **Current git status**: !`git status --porcelain`
+    - **Current branch**: !`git branch --show-current`
+    - **Recent commits**: !`git log --oneline -5`
+    
+    ## Analysis Focus
+    Focus on @$ARGUMENTS if provided
+    
+    ## Tasks
+    1. **Run existing tests**: !`npm run test`
+    2. **Check current performance**: !`npm run benchmark` (if available)
+    3. **Analyze the codebase**: Look for performance bottlenecks
+    4. **Suggest specific optimizations** with code examples
+    5. **Verify changes don't break functionality**
+    
+    Provide concrete, actionable performance improvements.
   '';
+  
+  home.file.".claude/commands/deploy.md".text = ''
+    ---
+    allowed-tools: Bash(git:*), Bash(npm:*), WebFetch
+    description: Smart deployment with comprehensive checks
+    ---
+    
+    # Smart Deploy Command
+    
+    Deploy the application with comprehensive checks:
+    
+    ## Pre-deployment Checks
+    - **Current branch**: !`git branch --show-current`
+    - **Uncommitted changes**: !`git status --porcelain`
+    - **Run tests**: !`npm run test`
+    - **Build check**: !`npm run build`
+    - **Check for security vulnerabilities**: !`npm audit`
+    
+    ## Deployment Strategy
+    Based on the current branch and project type:
+    - **main/master**: Deploy to production (requires confirmation)
+    - **staging**: Deploy to staging environment
+    - **develop**: Deploy to development environment
+    
+    ## Confirmation Required
+    Ask for explicit confirmation before proceeding with deployment, especially for production.
+  '';
+  
+  home.file.".claude/commands/frontend/component.md".text = ''
+    ---
+    allowed-tools: Read, Edit, Write, Bash(npm:*)
+    description: Generate React/Vue component with TypeScript
+    ---
+    
+    # Component Generator
+    
+    Create a new frontend component with the following specifications:
+    
+    ## Component Details
+    - **Component name**: $ARGUMENTS
+    - **Use TypeScript** with proper typing
+    - **Include styling** (CSS modules, styled-components, or framework-specific)
+    - **Add proper prop validation**
+    - **Include basic unit tests**
+    - **Follow project style guide** as outlined in @README.md or @CONTRIBUTING.md
+    
+    ## File Structure
+    Create the component in the appropriate directory based on project structure:
+    - Check existing components for patterns
+    - Follow naming conventions
+    - Include index file if needed
+    
+    ## Additional Context
+    - **Current project structure**: !`find src -name "*.tsx" -o -name "*.vue" | head -10`
+    - **Package.json dependencies**: !`grep -E "react|vue|typescript" package.json`
+  '';
+  
+  home.file.".claude/commands/backend/api.md".text = ''
+    ---
+    allowed-tools: Read, Edit, Write, Bash(npm:*), Bash(git:*)
+    description: Generate API endpoint with proper validation and testing
+    ---
+    
+    # API Endpoint Generator
+    
+    Create a new API endpoint with the following specifications:
+    
+    ## Endpoint Details
+    - **Endpoint name**: $ARGUMENTS
+    - **Include input validation** (joi, yup, or similar)
+    - **Add proper error handling**
+    - **Include authentication/authorization** if needed
+    - **Add comprehensive unit tests**
+    - **Follow REST/GraphQL conventions**
+    
+    ## Context Files
+    - **Current API structure**: !`find . -name "*.js" -o -name "*.ts" | grep -E "(api|routes|controllers)" | head -10`
+    - **Database models**: Check @models/ or @schemas/ directory
+    - **Authentication setup**: Check @auth/ or @middleware/ directory
+    
+    ## Requirements
+    - Follow existing code patterns
+    - Include proper documentation
+    - Add to API documentation if it exists
+  '';
+  
+  home.file.".claude/commands/debug.md".text = ''
+    ---
+    allowed-tools: Bash(npm:*), Bash(git:*), Read, Grep
+    description: Debug issues with comprehensive analysis
+    ---
+    
+    # Debug Command
+    
+    Debug the current issue systematically:
+    
+    ## Issue Analysis
+    Focus on: $ARGUMENTS
+    
+    ## Debugging Steps
+    1. **Check recent changes**: !`git log --oneline -10`
+    2. **Look for error logs**: !`grep -r "error\|Error\|ERROR" . --exclude-dir=node_modules --exclude-dir=.git`
+    3. **Check dependencies**: !`npm list --depth=0`
+    4. **Review configuration**: Look for config files
+    5. **Check environment**: !`env | grep -E "(NODE|PATH|PORT)"`
+    
+    ## Error Context
+    - **Current git status**: !`git status --porcelain`
+    - **Last successful commit**: !`git log --oneline --since="1 week ago"`
+    - **Package.json scripts**: !`grep -A 20 "scripts" package.json`
+    
+    Provide step-by-step debugging approach with specific commands to run.
+  '';
+  
+  home.file.".claude/commands/research.md".text = ''
+    ---
+    allowed-tools: WebFetch, Read, Grep
+    description: Comprehensive research using multiple search engines and AI tools
+    ---
+    
+    # Research Command
+    
+    Conduct comprehensive research on the specified topic using multiple sources:
+    
+    ## Research Topic
+    Research: $ARGUMENTS
+    
+    ## Research Strategy
+    Use the mcp-omnisearch server to gather information from multiple sources:
+    
+    1. **Search Multiple Engines**: Query Tavily, Brave, and Kagi for diverse perspectives
+    2. **AI Analysis**: Use Perplexity AI for synthesized insights
+    3. **Content Processing**: Leverage Jina AI Reader for article analysis
+    4. **Content Summarization**: Use Kagi Summarizer for key points
+    
+    ## Context Analysis
+    - **Current project**: Check @README.md for project context
+    - **Related files**: Look for existing documentation on the topic
+    - **Recent discussions**: !`grep -r "$ARGUMENTS" . --exclude-dir=node_modules --exclude-dir=.git`
+    
+    ## Output Format
+    Provide:
+    - **Executive Summary**: Key findings and insights
+    - **Detailed Analysis**: Comprehensive information from multiple sources
+    - **Actionable Recommendations**: Specific next steps
+    - **Source Attribution**: Credit all sources used
+    
+    Focus on accuracy, comprehensiveness, and actionable insights.
+  '';
+  
+  # Advanced settings configuration
+  home.file.".claude/settings.json".text = builtins.toJSON {
+    env = {
+      # Disable telemetry if desired
+      DISABLE_TELEMETRY = "1";
+      DISABLE_ERROR_REPORTING = "1";
+      
+      # Set any global environment variables for Claude Code
+      ANTHROPIC_API_KEY = ""; # Will be set via environment or auth
+    };
+    
+    # Global allowed tools - be careful with these
+    allowedTools = [
+      "Task"
+      "Bash(git:*)"  # Only allow git commands
+      "Bash(npm:*)"  # Only allow npm commands
+      "Glob"
+      "Grep"
+      "Read"
+      "Edit"
+      "MultiEdit"
+      "Write"
+      "WebFetch"
+    ];
+    
+    # Additional global settings
+    maxFileSize = 1000000; # 1MB file size limit
+    contextWindow = 200000; # Token limit for context
+  };
 }
