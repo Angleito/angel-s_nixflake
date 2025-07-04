@@ -6,8 +6,8 @@ in
 {
   programs.git = {
     enable = true;
-    userName  = gitName  or "Unknown";
-    userEmail = gitEmail or "unknown@example.com";
+    userName  = if gitName != "" then gitName else "Unknown";
+    userEmail = if gitEmail != "" then gitEmail else "unknown@example.com";
     
     # Use SSH for GitHub
     extraConfig = {

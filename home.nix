@@ -35,7 +35,7 @@
     ripgrep
     fd
     bat
-    exa
+    eza  # modern ls replacement (formerly exa)
     fzf
     jq
     yq
@@ -113,14 +113,6 @@
         error_symbol = "[➜](bold red)";
       };
     };
-  };
-
-  # VS Code configuration
-  programs.vscode = {
-    enable = true;
-    extensions = with pkgs.vscode-extensions; [
-      # Add VS Code extensions here
-    ];
   };
 
   # Set up npm global packages

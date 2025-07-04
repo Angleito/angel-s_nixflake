@@ -1,18 +1,23 @@
 { config, pkgs, ... }:
 
 {
-  # Auto upgrade nix package and the daemon service
-  services.nix-daemon.enable = true;
-  nix.package = pkgs.nix;
-
-  # Enable experimental features
-  nix.settings.experimental-features = "nix-command flakes";
+  # Set the primary user (required for the options below)
+  system.primaryUser = "angel";
+  
+  # Nix configuration
+  nix = {
+    package = pkgs.nix;
+    settings.experimental-features = "nix-command flakes";
+  };
 
   # Set your username
   users.users.angel = {
     name = "angel";
     home = "/Users/angel";
   };
+  
+  # Fix nixbld group ID
+  ids.gids.nixbld = 350;
 
   # System packages
   environment.systemPackages = with pkgs; [

@@ -16,10 +16,14 @@
   };
 
   outputs = { self, nixpkgs, darwin, home-manager }: {
-    darwinConfigurations."angels-MBP" = darwin.lib.darwinSystem {
+    darwinConfigurations."angels-MacBook-Pro" = darwin.lib.darwinSystem {
       system = "aarch64-darwin"; # or "x86_64-darwin" for Intel Macs
       
       modules = [
+        # Allow unfree packages
+        {
+          nixpkgs.config.allowUnfree = true;
+        }
         ./darwin-configuration.nix
         
         home-manager.darwinModules.home-manager
