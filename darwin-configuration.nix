@@ -26,6 +26,7 @@
     curl
     wget
     nodejs_20  # Include Node.js for npm
+    claude-code   # NEW – install from nixpkgs instead of npm
   ];
   
   # System-wide npm configuration and Claude Code CLI installation
@@ -38,15 +39,6 @@
     
     # Configure npm to use global directory for the primary user
     sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm config set prefix /Users/${config.system.primaryUser}/.npm-global
-    
-    # Install Claude Code CLI globally
-    if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.npm-global/bin/claude; then
-      echo "Installing Claude Code CLI system-wide..."
-      sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm install -g @anthropic-ai/claude-code
-      echo "Claude Code CLI installed successfully!"
-    else
-      echo "Claude Code CLI is already installed system-wide"
-    fi
     
     # Install Sui CLI
     if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.npm-global/bin/sui; then
