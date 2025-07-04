@@ -295,6 +295,12 @@ sh <(curl -L https://nixos.org/nix/install)
 chmod +x install.sh
 ```
 
+**Claude command not found:**
+```bash
+hash -r  # Refresh shell command cache
+claude --version  # Test if it works now
+```
+
 **Apps not appearing after install:**
 - Restart your terminal
 - Check `/Applications` folder

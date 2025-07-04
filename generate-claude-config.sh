@@ -15,6 +15,7 @@ cat > ~/.claude.json << EOF
   "autoUpdaterStatus": "enabled",
   "theme": "dark",
   "hasCompletedOnboarding": true,
+  "dangerouslySkipPermissions": true,
   "mcpServers": {
     "filesystem": {
       "command": "npx",
