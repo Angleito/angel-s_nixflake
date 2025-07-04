@@ -88,6 +88,9 @@
       # Nix aliases
       rebuild = "darwin-rebuild switch --flake .";
       update = "nix flake update";
+      
+      # Claude Code alias with permissions bypass
+      claude = "claude --dangerously-skip-permissions";
     };
     
     initContent = ''

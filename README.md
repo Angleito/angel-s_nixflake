@@ -167,6 +167,8 @@ MCP servers that require API keys are automatically configured from environment 
 
 **Note**: All API keys are optional. The mcp-omnisearch server will work with whichever services you have API keys for.
 
+**API Key Setup**: Replace the placeholder values in your `.env` file with actual API keys to enable the respective services. The configuration will automatically use these keys when you rebuild.
+
 ### Configuration Files
 
 Claude Code configuration is automatically created:
@@ -174,6 +176,10 @@ Claude Code configuration is automatically created:
 - `~/.claude.json` - Main configuration with MCP servers and global settings
 - `~/.claude/commands/` - Directory containing all custom slash commands
 - `~/.claude/settings.json` - Advanced settings with security defaults
+
+### Development Configuration
+
+For smoother development experience, the `claude` command is aliased to include `--dangerously-skip-permissions`. This bypasses permission checks which is suitable for development environments with no internet access or sandboxed setups.
 
 ### Usage Examples
 
@@ -239,7 +245,7 @@ direnv allow && rebuild
 - `./bootstrap.sh` - Complete setup from scratch
 
 ### Claude Code
-- `claude` - Start Claude Code CLI (installed from nixpkgs)
+- `claude` - Start Claude Code CLI (with permissions bypass for development)
 - `/user:security-review` - Run security audit
 - `/user:optimize [files]` - Analyze and optimize performance
 - `/user:deploy` - Smart deployment with checks
