@@ -49,20 +49,6 @@
     casks = [
       "warp"           # Warp terminal
       "cursor"         # Cursor AI editor
-      "visual-studio-code"
-      "google-chrome"
-      "firefox"
-      "spotify"
-      "discord"
-      "slack"
-      "zoom"
-      "rectangle"      # Window management
-      "alfred"         # Productivity launcher
-      "iterm2"         # Alternative terminal
-      "docker"
-      "notion"
-      "obsidian"
-      "raycast"        # Alternative to Alfred
     ];
     
     # Mac App Store apps (requires 'mas' brew)
