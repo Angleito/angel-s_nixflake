@@ -91,8 +91,8 @@
     };
     
     initContent = ''
-      # Add npm global bin to PATH
-      export PATH="$HOME/.npm-global/bin:$PATH"
+      # Add npm global bin and local bin to PATH
+      export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$PATH"
       
       # Starship prompt
       eval "$(starship init zsh)"
@@ -123,9 +123,10 @@
     prefix = ''${HOME}/.npm-global
   '';
 
-  # Add npm global bin to PATH
+  # Add npm global bin and local bin to PATH
   home.sessionPath = [
     "$HOME/.npm-global/bin"
+    "$HOME/.local/bin"
   ];
 
   # Configure npm globally on first activation

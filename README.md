@@ -60,7 +60,9 @@ This configuration implements several privacy safeguards to protect your persona
 - **Languages:** Node.js, Python, Go, Rust
 - **Version Control:** Git, GitHub CLI, Lazygit
 - **Containers:** Docker, Docker Compose
-- **AI Tools:** Claude Code CLI (`@anthropic-ai/claude-code`)
+- **AI Tools:**
+  - Claude Code CLI (`@anthropic-ai/claude-code`)
+  - Sui CLI, Walrus CLI, Sei CLI
 - **CLI Tools:** ripgrep, fzf, bat, eza, htop, and more
 - **Shell:** Zsh with autosuggestions, syntax highlighting, and Starship prompt
 - **Package Management:** npm configured globally in user directory
@@ -110,6 +112,7 @@ direnv allow && rebuild
 - `direnv allow` - Reload environment variables
 - `darwin-rebuild switch --flake .` - Full rebuild command
 - `claude` - Claude Code CLI (automatically installed)
+- `sui`, `walrus`, `sei` - Sui, Walrus, and Sei CLI tools (automatically installed)
 
 ## 📁 Project Structure
 

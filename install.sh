@@ -140,7 +140,7 @@ if ! command -v darwin-rebuild &> /dev/null; then
     echo "  - Configure your system with the settings in darwin-configuration.nix"
     echo "  - Set up home-manager with your user packages"
     echo "  - Install Node.js and configure npm globally"
-    echo "  - Install Claude Code CLI system-wide"
+    echo "  - Install Claude Code CLI, Sui CLI, Walrus CLI, and Sei CLI system-wide"
     echo ""
     
     # First build of nix-darwin
@@ -172,7 +172,7 @@ echo "  • Node.js, Python, Go, Rust"
 echo "  • Git, GitHub CLI, Lazygit"
 echo "  • Docker, Docker Compose"
 echo "  • Modern CLI tools (ripgrep, fzf, bat, etc.)"
-echo "  • Claude Code CLI (@anthropic-ai/claude-code)"
+echo "  • AI & Blockchain CLIs: Claude Code, Sui, Walrus, Sei"
 echo ""
 echo "Next steps:"
 echo "1. Restart your terminal or run: source ~/.zshrc"
