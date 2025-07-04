@@ -97,9 +97,23 @@ fi
 echo ""
 echo "✅ Setup complete!"
 echo ""
+
+# Check if nix-darwin is already installed
+if ! command -v darwin-rebuild &> /dev/null; then
+    echo "Installing nix-darwin..."
+    nix --extra-experimental-features 'nix-command flakes' run nix-darwin -- switch --flake .
+    echo "nix-darwin installed successfully!"
+else
+    echo "nix-darwin is already installed"
+fi
+
+echo ""
 echo "Next steps:"
 echo "1. Ensure your .env file contains the correct values"
 echo "2. Restart your shell or run: source ~/.zshrc"
-echo "3. Run 'darwin-rebuild switch' to apply your nix-darwin configuration"
+echo "3. Run 'rebuild' (alias) or 'darwin-rebuild switch --flake .' to apply changes"
 echo ""
-echo "Note: If using home-manager, add direnv to your home.nix packages list"
+echo "To customize your setup:"
+echo "- Edit darwin-configuration.nix to add/remove system apps (casks)"
+echo "- Edit home.nix to add/remove user packages"
+echo "- Run 'rebuild' after making changes"
