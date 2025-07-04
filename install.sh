@@ -2,36 +2,76 @@
 
 set -e
 
+echo "Setting up nix-darwin environment..."
+
+# Check if .env file exists, if not prompt user to create it
+if [ ! -f ".env" ]; then
+    if [ -f ".env.sample" ]; then
+        echo ""
+        echo "⚠️  IMPORTANT: Environment configuration required!"
+        echo "================================================"
+        echo "Before running darwin-rebuild, you need to set up your environment variables."
+        echo ""
+        echo "Please:"
+        echo "1. Copy .env.sample to .env:"
+        echo "   cp .env.sample .env"
+        echo ""
+        echo "2. Edit .env and replace the sample values with your real configuration"
+        echo ""
+        read -p "Would you like to copy .env.sample to .env now? (y/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            cp .env.sample .env
+            echo "✓ Created .env from .env.sample"
+            echo ""
+            echo "Please edit .env with your actual values before proceeding."
+            echo "Opening .env in your default editor..."
+            ${EDITOR:-nano} .env
+        else
+            echo "Please set up your .env file before running darwin-rebuild."
+            exit 1
+        fi
+    else
+        echo "Warning: No .env.sample file found. Please create a .env file with your configuration."
+    fi
+fi
+
+echo ""
 echo "Installing and configuring direnv..."
 
-# Check if we're on macOS
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # Check if Homebrew is installed
+# Check if Nix is available
+if command -v nix &> /dev/null; then
+    # Check if home-manager is already configured
+    if command -v home-manager &> /dev/null; then
+        echo "home-manager is available, direnv should be managed through home-manager configuration"
+        echo "Make sure direnv is included in your home.nix packages"
+    else
+        # Install direnv via nix profile install
+        if ! command -v direnv &> /dev/null; then
+            echo "Installing direnv via nix profile..."
+            nix profile install nixpkgs#direnv
+        else
+            echo "direnv is already installed"
+        fi
+    fi
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # Fallback to Homebrew on macOS if Nix is not available
     if ! command -v brew &> /dev/null; then
-        echo "Homebrew not found. Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo "Neither Nix nor Homebrew found. Please install Nix first."
+        echo "Visit: https://nixos.org/download.html"
+        exit 1
     fi
     
     # Install direnv via Homebrew
     if ! command -v direnv &> /dev/null; then
-        echo "Installing direnv..."
+        echo "Installing direnv via Homebrew..."
         brew install direnv
     else
         echo "direnv is already installed"
     fi
 else
-    # For non-macOS systems, check if Nix is available
-    if command -v nix-env &> /dev/null; then
-        if ! command -v direnv &> /dev/null; then
-            echo "Installing direnv via Nix..."
-            nix-env -iA nixpkgs.direnv
-        else
-            echo "direnv is already installed"
-        fi
-    else
-        echo "Please install direnv manually for your system"
-        exit 1
-    fi
+    echo "Please install Nix first. Visit: https://nixos.org/download.html"
+    exit 1
 fi
 
 # Configure direnv for zsh
@@ -54,4 +94,12 @@ if command -v direnv &> /dev/null; then
     direnv allow .
 fi
 
-echo "Setup complete! Please restart your shell or run: source ~/.zshrc"
+echo ""
+echo "✅ Setup complete!"
+echo ""
+echo "Next steps:"
+echo "1. Ensure your .env file contains the correct values"
+echo "2. Restart your shell or run: source ~/.zshrc"
+echo "3. Run 'darwin-rebuild switch' to apply your nix-darwin configuration"
+echo ""
+echo "Note: If using home-manager, add direnv to your home.nix packages list"
