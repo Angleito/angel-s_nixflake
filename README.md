@@ -179,7 +179,13 @@ Claude Code configuration is automatically created:
 
 ### Development Configuration
 
-For smoother development experience, the `claude` command is aliased to include `--dangerously-skip-permissions`. This bypasses permission checks which is suitable for development environments with no internet access or sandboxed setups.
+For smoother development experience, the `claude` command includes several optimizations:
+
+- **Automatic permissions bypass**: Includes `--dangerously-skip-permissions` flag
+- **Command cache refresh**: Runs `hash -r` automatically to prevent "command not found" issues
+- **Dynamic binary detection**: Automatically finds the claude-code binary in the nix store
+
+This configuration is suitable for development environments with no internet access or sandboxed setups.
 
 ### Usage Examples
 
@@ -296,10 +302,8 @@ chmod +x install.sh
 ```
 
 **Claude command not found:**
-```bash
-hash -r  # Refresh shell command cache
-claude --version  # Test if it works now
-```
+- The `claude` command automatically refreshes the shell cache
+- If issues persist, restart your terminal or run `direnv reload`
 
 **Apps not appearing after install:**
 - Restart your terminal

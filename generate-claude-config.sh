@@ -93,8 +93,11 @@ EOF
 echo "Creating claude wrapper script..."
 cat > ~/.local/bin/claude << 'EOF'
 #!/bin/bash
+# Refresh shell command cache to ensure all commands are available
+hash -r
+
 # Find the latest claude-code binary in nix store
-CLAUDE_BIN=$(find /nix/store -name "claude" -path "*/claude-code-*/bin/claude" -type f -executable 2>/dev/null | head -1)
+CLAUDE_BIN=$(find /nix/store -name "*claude*" -type f -executable 2>/dev/null | grep "bin/claude" | head -1)
 if [ -z "$CLAUDE_BIN" ]; then
     echo "Error: Claude Code binary not found in nix store"
     echo "Please ensure claude-code is installed via nix"
