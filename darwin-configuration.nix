@@ -16,7 +16,8 @@
     home = "/Users/angel";
   };
   
-  # Remove the hardcoded group ID setting - let nix-darwin manage it automatically
+  # Set nixbld group ID to match existing installation
+  ids.gids.nixbld = 350;
 
   # System packages
   environment.systemPackages = with pkgs; [
@@ -98,19 +99,20 @@
       # First, ensure cargo is available by initializing rustup
       if ! sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env 2>/dev/null && command -v cargo" &> /dev/null; then
         echo "Initializing Rust toolchain..."
-        sudo -u ${config.system.primaryUser} ${pkgs.rustup}/bin/rustup-init -y --no-modify-path
+        # Use rustup to install the default toolchain
+        sudo -u ${config.system.primaryUser} ${pkgs.rustup}/bin/rustup toolchain install stable
         sudo -u ${config.system.primaryUser} ${pkgs.rustup}/bin/rustup default stable
         
         # Verify cargo is now available
-        if ! sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env && command -v cargo" &> /dev/null; then
+        if ! sudo -u ${config.system.primaryUser} bash -c "${pkgs.rustup}/bin/cargo --version" &> /dev/null; then
           echo "Warning: Cargo initialization may have failed. Falling back to npm installation."
         fi
       fi
       
       # Install Sui using cargo (Rust package manager) with better error handling
-      if sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env && command -v cargo" &> /dev/null; then
+      if sudo -u ${config.system.primaryUser} bash -c "${pkgs.rustup}/bin/cargo --version" &> /dev/null; then
         echo "Installing Sui CLI via cargo..."
-        if sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env && cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui"; then
+        if sudo -u ${config.system.primaryUser} ${pkgs.rustup}/bin/cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui; then
           echo "Sui CLI installed successfully via cargo!"
         else
           echo "Cargo installation failed. Falling back to npm..."
