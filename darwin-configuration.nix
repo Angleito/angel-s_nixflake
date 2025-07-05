@@ -54,6 +54,24 @@
     echo "Power management settings configured"
   '';
   
+  # Install Xcode Command Line Tools if not already installed
+  system.activationScripts.xcodeTools.text = ''
+    if ! xcode-select -p &> /dev/null; then
+      echo "Installing Xcode Command Line Tools..."
+      touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+      PROD=$(softwareupdate -l | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^:]*: //')
+      if [ -n "$PROD" ]; then
+        softwareupdate -i "$PROD" --verbose
+      else
+        echo "Could not find Xcode Command Line Tools in software update catalog"
+        echo "You may need to install manually with: xcode-select --install"
+      fi
+      rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+    else
+      echo "Xcode Command Line Tools already installed"
+    fi
+  '';
+  
   # System-wide npm configuration for other CLI tools
   system.activationScripts.postActivation.text = ''
     # Configure npm globally for all users
@@ -120,12 +138,15 @@
       "cursor"         # Cursor AI editor
       "brave-browser"  # Brave browser
       "orbstack"       # Docker/container management
+      "zoom"           # Zoom video conferencing
+      "slack"          # Slack messaging
     ];
     
     # Mac App Store apps (requires 'mas' brew)
     masApps = {
       # "App Name" = App_ID;
       # To find App IDs, use: mas search "app name"
+      "GarageBand" = 682658836;
     };
   };
 
