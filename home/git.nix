@@ -24,6 +24,9 @@ in
       
       # Use macOS keychain for credentials
       credential.helper = "osxkeychain";
+      
+      # Hooks configuration
+      core.hooksPath = "~/.config/git/hooks";
     };
   };
   

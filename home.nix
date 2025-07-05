@@ -94,6 +94,11 @@
       # Add local bin to PATH
       export PATH="$HOME/.local/bin:$PATH"
       
+      # Source .env file from nix-project if it exists
+      if [ -f "$HOME/Projects/nix-project/.env" ]; then
+        export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+      fi
+      
       # Starship prompt
       eval "$(starship init zsh)"
       
@@ -125,6 +130,14 @@
 
   # Create claude wrapper script with permissions bypass
   home.file.".local/bin/claude".text = ''#!/bin/bash
+    # Source .env file from nix-project if it exists
+    if [ -f "$HOME/Projects/nix-project/.env" ]; then
+      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+    fi
+    
+    # Force shell to recognize the new command
+    hash -r
+    
     exec ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
   '';
   
@@ -444,4 +457,23 @@ EOF
     maxFileSize = 1000000; # 1MB file size limit
     contextWindow = 200000; # Token limit for context
   };
+  
+  # Create git hooks to remove Claude co-authored signature
+  home.activation.gitHooks = config.lib.dag.entryAfter ["writeBoundary"] ''
+    # Create git hooks directory
+    mkdir -p "$HOME/.config/git/hooks"
+    
+    # Create commit-msg hook to remove Claude co-authored signature
+    cat > "$HOME/.config/git/hooks/commit-msg" << 'EOF'
+#!/bin/bash
+# Remove Claude co-authored signature from commits
+TEMP_FILE=$(mktemp)
+grep -v "Co-Authored-By: Claude <noreply@anthropic.com>" "$1" > "$TEMP_FILE"
+grep -v "🤖 Generated with \[Claude Code\]" "$TEMP_FILE" > "$1"
+rm "$TEMP_FILE"
+EOF
+    
+    # Make the hook executable
+    chmod +x "$HOME/.config/git/hooks/commit-msg"
+  '';
 }
