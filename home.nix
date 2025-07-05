@@ -133,7 +133,13 @@
 
   # Claude Code Configuration
   # Create the main Claude configuration file with environment variable support
-  home.file.".claude.json".text = let
+  # Using home.activation to create a writable file instead of read-only home.file
+  home.activation.claudeConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
+    CLAUDE_CONFIG_PATH="$HOME/.claude.json"
+    
+    # Create the config content
+    cat > "$CLAUDE_CONFIG_PATH" << 'EOF'
+${builtins.toJSON (let
     # Read environment variables with fallbacks
     tavilyKey = builtins.getEnv "TAVILY_API_KEY";
     braveKey = builtins.getEnv "BRAVE_API_KEY";
@@ -141,7 +147,7 @@
     perplexityKey = builtins.getEnv "PERPLEXITY_API_KEY";
     jinaKey = builtins.getEnv "JINA_AI_API_KEY";
     firecrawlKey = builtins.getEnv "FIRECRAWL_API_KEY";
-  in builtins.toJSON {
+  in {
     numStartups = 0;
     autoUpdaterStatus = "enabled";
     theme = "dark";
@@ -201,7 +207,12 @@
     projects = {
       # This will be populated by individual projects
     };
-  };
+  })}
+EOF
+    
+    # Make the file writable
+    chmod 644 "$CLAUDE_CONFIG_PATH"
+  '';
 
   # Create the Claude commands directory structure
   home.file.".claude/commands/.keep".text = "";

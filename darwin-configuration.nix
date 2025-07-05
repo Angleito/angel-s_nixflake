@@ -36,51 +36,35 @@
     
     # Create npm global directory for the primary user
     sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.npm-global
+    sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.npm-cache
     
-    # Configure npm to use global directory for the primary user
-    sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm config set prefix /Users/${config.system.primaryUser}/.npm-global
+    # Note: npm configuration moved to user-level to avoid permission issues
+    # Users can configure npm manually with:
+    # npm config set prefix ~/.npm-global
+    # npm config set cache ~/.npm-cache
     
-    # Install Sui CLI
-    if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.npm-global/bin/sui; then
-      echo "Installing Sui CLI..."
-      sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm install -g @mysten/sui
-      echo "Sui CLI installed successfully!"
-    else
-      echo "Sui CLI is already installed"
-    fi
-    
-    # Install Walrus CLI
-    if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.npm-global/bin/walrus; then
-      echo "Installing Walrus CLI..."
-      sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm install -g @mysten/walrus
-      echo "Walrus CLI installed successfully!"
-    else
-      echo "Walrus CLI is already installed"
-    fi
-    
-    # Install Sei CLI (if available as npm package)
-    if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.npm-global/bin/sei; then
+    # Install Sei CLI via binary download (avoiding npm permission issues)
+    if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.local/bin/sei; then
       echo "Installing Sei CLI..."
-      # Note: Sei CLI might need to be installed differently if not available via npm
-      # Check if sei-cli package exists, otherwise install via other method
-      if sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm view sei-chain > /dev/null 2>&1; then
-        sudo -u ${config.system.primaryUser} ${pkgs.nodejs_20}/bin/npm install -g sei-chain
+      sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.local/bin
+      # Download and install Sei CLI binary for macOS
+      if [[ "$(uname -m)" == "arm64" ]]; then
+        curl -L https://github.com/sei-protocol/sei-chain/releases/latest/download/seid-darwin-arm64 -o /tmp/seid
       else
-        echo "Sei CLI npm package not found, installing via binary download..."
-        # Download and install Sei CLI binary for macOS
-        if [[ "$(uname -m)" == "arm64" ]]; then
-          curl -L https://github.com/sei-protocol/sei-chain/releases/latest/download/seid-darwin-arm64 -o /tmp/seid
-        else
-          curl -L https://github.com/sei-protocol/sei-chain/releases/latest/download/seid-darwin-amd64 -o /tmp/seid
-        fi
-        chmod +x /tmp/seid
-        sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.local/bin
-        sudo -u ${config.system.primaryUser} mv /tmp/seid /Users/${config.system.primaryUser}/.local/bin/sei
+        curl -L https://github.com/sei-protocol/sei-chain/releases/latest/download/seid-darwin-amd64 -o /tmp/seid
       fi
+      sudo chown ${config.system.primaryUser}:staff /tmp/seid
+      chmod +x /tmp/seid
+      sudo -u ${config.system.primaryUser} mv /tmp/seid /Users/${config.system.primaryUser}/.local/bin/sei
       echo "Sei CLI installed successfully!"
     else
       echo "Sei CLI is already installed"
     fi
+    
+    # Note: Sui and Walrus CLI installations moved to user-level to avoid permission issues
+    # Users can install them manually with: npm install -g @mysten/sui @mysten/walrus
+    echo "📝 To install Sui and Walrus CLI tools, run:"
+    echo "   npm install -g @mysten/sui @mysten/walrus"
   '';
 
   # Homebrew configuration
@@ -94,11 +78,10 @@
       upgrade = true;
     };
     
-    # Taps
+    # Taps - removed deprecated/unnecessary taps
     taps = [
-      "homebrew/core"
-      "homebrew/cask"
-      "homebrew/services"
+      # homebrew/core and homebrew/cask are now built-in and don't need to be tapped
+      # homebrew/services has been deprecated
     ];
     
     # Homebrew formulae (CLI tools)
@@ -125,7 +108,7 @@
   system.defaults = {
     # Dock settings
     dock = {
-      autohide = true;
+      autohide = false; # Keep dock visible
       show-recents = false;
       minimize-to-application = true;
       mru-spaces = false; # Don't rearrange spaces
