@@ -29,6 +29,31 @@
     claude-code   # NEW – install from nixpkgs instead of npm
   ];
   
+  # Power management settings - prevent display from turning off
+  system.activationScripts.powerManagement.text = ''
+    echo "Configuring power management settings..."
+    
+    # Prevent display from sleeping (0 = never)
+    pmset -a displaysleep 0
+    
+    # Prevent system from sleeping when on AC power (0 = never)
+    pmset -c sleep 0
+    
+    # Prevent disk from sleeping
+    pmset -a disksleep 0
+    
+    # Keep the system awake when the display is off
+    pmset -a powernap 0
+    
+    # Prevent automatic sleep when on AC power
+    pmset -c autopoweroff 0
+    
+    # Optional: Keep display awake even when system is idle
+    pmset -a lessbright 0
+    
+    echo "Power management settings configured"
+  '';
+  
   # System-wide npm configuration for other CLI tools
   system.activationScripts.postActivation.text = ''
     # Configure npm globally for all users
