@@ -65,6 +65,48 @@
         type = "app";
         program = "${pkgs.vercel-cli}/bin/vercel";
       };
+      
+      # Deployment helper
+      deploy = {
+        type = "app";
+        program = toString (pkgs.writeShellScript "deploy" ''
+          set -euo pipefail
+          echo "🔄 Deploying Darwin configuration..."
+          sudo ${darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild switch --flake .
+          echo "✅ Deployment complete!"
+        '');
+      };
+      
+      # Installation helper
+      install = {
+        type = "app";
+        program = toString (pkgs.writeShellScript "install" ''
+          set -euo pipefail
+          
+          echo "🚀 Installing Angel's Nix Darwin Configuration"
+          echo ""
+          
+          # Check if Nix is installed
+          if ! command -v nix &> /dev/null; then
+              echo "❌ Nix is not installed. Please install Nix first:"
+              echo "   curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install"
+              exit 1
+          fi
+          
+          # Check if nix-darwin is installed
+          if ! command -v darwin-rebuild &> /dev/null; then
+              echo "📦 Installing nix-darwin..."
+              nix run nix-darwin -- switch --flake .
+          else
+              echo "🔄 Updating configuration..."
+              sudo darwin-rebuild switch --flake .
+          fi
+          
+          echo ""
+          echo "✅ Installation complete!"
+          echo "🎉 Your development environment is ready to use!"
+        '');
+      };
     };
     
     # Darwin configuration
@@ -122,48 +164,6 @@
         echo ""
         echo "Run 'nix flake show' to see all available packages and apps"
       '';
-    };
-    
-    # Deployment helper
-    apps.${system}.deploy = {
-      type = "app";
-      program = toString (pkgs.writeShellScript "deploy" ''
-        set -euo pipefail
-        echo "🔄 Deploying Darwin configuration..."
-        sudo ${darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild switch --flake .
-        echo "✅ Deployment complete!"
-      '');
-    };
-    
-    # Installation helper
-    apps.${system}.install = {
-      type = "app";
-      program = toString (pkgs.writeShellScript "install" ''
-        set -euo pipefail
-        
-        echo "🚀 Installing Angel's Nix Darwin Configuration"
-        echo ""
-        
-        # Check if Nix is installed
-        if ! command -v nix &> /dev/null; then
-            echo "❌ Nix is not installed. Please install Nix first:"
-            echo "   curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install"
-            exit 1
-        fi
-        
-        # Check if nix-darwin is installed
-        if ! command -v darwin-rebuild &> /dev/null; then
-            echo "📦 Installing nix-darwin..."
-            nix run nix-darwin -- switch --flake .
-        else
-            echo "🔄 Updating configuration..."
-            sudo darwin-rebuild switch --flake .
-        fi
-        
-        echo ""
-        echo "✅ Installation complete!"
-        echo "🎉 Your development environment is ready to use!"
-      '');
     };
   };
 }
