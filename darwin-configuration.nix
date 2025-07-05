@@ -86,28 +86,69 @@
     # npm config set prefix ~/.npm-global
     # npm config set cache ~/.npm-cache
     
-    # Install Sei CLI via binary download (avoiding npm permission issues)
-    if ! sudo -u ${config.system.primaryUser} test -f /Users/${config.system.primaryUser}/.local/bin/sei; then
-      echo "Installing Sei CLI..."
-      sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.local/bin
-      # Download and install Sei CLI binary for macOS
-      if [[ "$(uname -m)" == "arm64" ]]; then
-        curl -L https://github.com/sei-protocol/sei-chain/releases/latest/download/seid-darwin-arm64 -o /tmp/seid
+    # Install Sui CLI
+    if ! command -v sui &> /dev/null; then
+      echo "Installing Sui CLI..."
+      # Install Sui using cargo (Rust package manager)
+      if command -v cargo &> /dev/null; then
+        sudo -u ${config.system.primaryUser} cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui
+        echo "Sui CLI installed successfully!"
       else
-        curl -L https://github.com/sei-protocol/sei-chain/releases/latest/download/seid-darwin-amd64 -o /tmp/seid
+        echo "Cargo not found. Installing Sui via npm as fallback..."
+        sudo -u ${config.system.primaryUser} npm install -g @mysten/sui
       fi
-      sudo chown ${config.system.primaryUser}:staff /tmp/seid
-      chmod +x /tmp/seid
-      sudo -u ${config.system.primaryUser} mv /tmp/seid /Users/${config.system.primaryUser}/.local/bin/sei
-      echo "Sei CLI installed successfully!"
     else
-      echo "Sei CLI is already installed"
+      echo "Sui CLI is already installed"
     fi
     
-    # Note: Sui and Walrus CLI installations moved to user-level to avoid permission issues
-    # Users can install them manually with: npm install -g @mysten/sui @mysten/walrus
-    echo "📝 To install Sui and Walrus CLI tools, run:"
-    echo "   npm install -g @mysten/sui @mysten/walrus"
+    # Install Walrus CLI
+    if ! command -v walrus &> /dev/null; then
+      echo "Installing Walrus CLI..."
+      # Check the architecture and download appropriate binary
+      ARCH=$(uname -m)
+      if [ "$ARCH" = "arm64" ]; then
+        WALRUS_ARCH="arm64"
+      else
+        WALRUS_ARCH="x86_64"
+      fi
+      
+      # Download Walrus binary for macOS
+      echo "Downloading Walrus CLI for macOS $WALRUS_ARCH..."
+      curl -L "https://github.com/MystenLabs/walrus-sites/releases/latest/download/site-builder-macos-$WALRUS_ARCH" -o /tmp/walrus
+      
+      # Make it executable and move to local bin
+      chmod +x /tmp/walrus
+      sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.local/bin
+      sudo -u ${config.system.primaryUser} mv /tmp/walrus /Users/${config.system.primaryUser}/.local/bin/walrus
+      
+      # Configure Walrus for testnet
+      echo "Configuring Walrus for testnet..."
+      sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.config/walrus
+      cat > /tmp/walrus-config.yaml << 'EOF'
+system_object: 0x70a61a5cf43b2c00aacf57e6784f5c8a09b4dd68de16f96b7c5a3bb5c3c8c04e5
+storage_nodes:
+  - name: wal-devnet-0
+    rpc_url: https://rpc-walrus-testnet.nodes.guru:443
+    rest_url: https://storage.testnet.sui.walrus.site/v1
+  - name: wal-devnet-1
+    rpc_url: https://walrus-testnet-rpc.bartestnet.com
+    rest_url: https://walrus-testnet-storage.bartestnet.com/v1
+  - name: wal-devnet-2
+    rpc_url: https://walrus-testnet.blockscope.net
+    rest_url: https://walrus-testnet-storage.blockscope.net/v1
+  - name: wal-devnet-3
+    rpc_url: https://walrus-testnet-rpc.nodes.guru
+    rest_url: https://walrus-testnet-storage.nodes.guru/v1
+  - name: wal-devnet-4
+    rpc_url: https://walrus.testnet.arcadia.global
+    rest_url: https://walrus-storage.testnet.arcadia.global/v1
+EOF
+      sudo -u ${config.system.primaryUser} mv /tmp/walrus-config.yaml /Users/${config.system.primaryUser}/.config/walrus/client_config.yaml
+      
+      echo "Walrus CLI installed and configured for testnet!"
+    else
+      echo "Walrus CLI is already installed"
+    fi
   '';
 
   # Homebrew configuration
