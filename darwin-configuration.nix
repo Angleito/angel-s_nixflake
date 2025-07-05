@@ -104,9 +104,11 @@
           export HOME=$USER_HOME
           export RUSTUP_HOME=$USER_HOME/.rustup
           export CARGO_HOME=$USER_HOME/.cargo
-          mkdir -p $USER_HOME/.rustup $USER_HOME/.cargo
+          mkdir -p $USER_HOME/.rustup $USER_HOME/.cargo $USER_HOME/.cargo/bin
           ${pkgs.rustup}/bin/rustup toolchain install stable
           ${pkgs.rustup}/bin/rustup default stable
+          # Create symlinks to make rustc available
+          ln -sf \$RUSTUP_HOME/toolchains/stable-aarch64-apple-darwin/bin/* $USER_HOME/.cargo/bin/
         "
         
         # Verify cargo is now available
@@ -172,7 +174,8 @@
       # Make it executable and move to local bin
       chmod +x /tmp/walrus
       sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.local/bin"
-      sudo -u ${config.system.primaryUser} mv /tmp/walrus "$USER_HOME/.local/bin/walrus"
+      mv /tmp/walrus "$USER_HOME/.local/bin/walrus"
+      chown ${config.system.primaryUser}:staff "$USER_HOME/.local/bin/walrus"
       
       # Configure Walrus for testnet
       echo "Configuring Walrus for testnet..."
