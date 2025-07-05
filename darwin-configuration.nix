@@ -16,8 +16,7 @@
     home = "/Users/angel";
   };
   
-  # Fix nixbld group ID
-  ids.gids.nixbld = 350;
+  # Remove the hardcoded group ID setting - let nix-darwin manage it automatically
 
   # System packages
   environment.systemPackages = with pkgs; [
@@ -26,6 +25,7 @@
     curl
     wget
     nodejs_20  # Include Node.js for npm
+    rustup     # Rust toolchain for Sui CLI and other Rust tools
     claude-code   # NEW – install from nixpkgs instead of npm
   ];
   
@@ -74,28 +74,51 @@
   
   # System-wide npm configuration for other CLI tools
   system.activationScripts.postActivation.text = ''
-    # Configure npm globally for all users
-    export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/nix/var/nix/profiles/default/bin"
+    # Source the Nix environment to ensure all tools are available
+    # shellcheck disable=SC1091
+    source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+    
+    # Set up dynamic paths
+    USER_HOME="${config.users.users.${config.system.primaryUser}.home}"
+    NPM_BIN="${pkgs.nodejs_20}/bin/npm"
     
     # Create npm global directory for the primary user
-    sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.npm-global
-    sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.npm-cache
+    sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.npm-global"
+    sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.npm-cache"
     
     # Note: npm configuration moved to user-level to avoid permission issues
     # Users can configure npm manually with:
     # npm config set prefix ~/.npm-global
     # npm config set cache ~/.npm-cache
     
-    # Install Sui CLI
+    # Install Sui CLI with improved dependency checking
     if ! command -v sui &> /dev/null; then
       echo "Installing Sui CLI..."
-      # Install Sui using cargo (Rust package manager)
-      if command -v cargo &> /dev/null; then
-        sudo -u ${config.system.primaryUser} cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui
-        echo "Sui CLI installed successfully!"
+      
+      # First, ensure cargo is available by initializing rustup
+      if ! sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env 2>/dev/null && command -v cargo" &> /dev/null; then
+        echo "Initializing Rust toolchain..."
+        sudo -u ${config.system.primaryUser} ${pkgs.rustup}/bin/rustup-init -y --no-modify-path
+        sudo -u ${config.system.primaryUser} ${pkgs.rustup}/bin/rustup default stable
+        
+        # Verify cargo is now available
+        if ! sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env && command -v cargo" &> /dev/null; then
+          echo "Warning: Cargo initialization may have failed. Falling back to npm installation."
+        fi
+      fi
+      
+      # Install Sui using cargo (Rust package manager) with better error handling
+      if sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env && command -v cargo" &> /dev/null; then
+        echo "Installing Sui CLI via cargo..."
+        if sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env && cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui"; then
+          echo "Sui CLI installed successfully via cargo!"
+        else
+          echo "Cargo installation failed. Falling back to npm..."
+          sudo -u ${config.system.primaryUser} "$NPM_BIN" install -g @mysten/sui
+        fi
       else
-        echo "Cargo not found. Installing Sui via npm as fallback..."
-        sudo -u ${config.system.primaryUser} npm install -g @mysten/sui
+        echo "Cargo not available. Installing Sui via npm as fallback..."
+        sudo -u ${config.system.primaryUser} "$NPM_BIN" install -g @mysten/sui
       fi
     else
       echo "Sui CLI is already installed"
@@ -112,18 +135,18 @@
         WALRUS_ARCH="x86_64"
       fi
       
-      # Download Walrus binary for macOS
+      # Download Walrus binary for macOS using dynamic curl path
       echo "Downloading Walrus CLI for macOS $WALRUS_ARCH..."
-      curl -L "https://github.com/MystenLabs/walrus-sites/releases/latest/download/site-builder-macos-$WALRUS_ARCH" -o /tmp/walrus
+      ${pkgs.curl}/bin/curl -L "https://github.com/MystenLabs/walrus-sites/releases/latest/download/site-builder-macos-$WALRUS_ARCH" -o /tmp/walrus
       
       # Make it executable and move to local bin
       chmod +x /tmp/walrus
-      sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.local/bin
-      sudo -u ${config.system.primaryUser} mv /tmp/walrus /Users/${config.system.primaryUser}/.local/bin/walrus
+      sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.local/bin"
+      sudo -u ${config.system.primaryUser} mv /tmp/walrus "$USER_HOME/.local/bin/walrus"
       
       # Configure Walrus for testnet
       echo "Configuring Walrus for testnet..."
-      sudo -u ${config.system.primaryUser} mkdir -p /Users/${config.system.primaryUser}/.config/walrus
+      sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.config/walrus"
       cat > /tmp/walrus-config.yaml << 'EOF'
 system_object: 0x70a61a5cf43b2c00aacf57e6784f5c8a09b4dd68de16f96b7c5a3bb5c3c8c04e5
 storage_nodes:
@@ -143,7 +166,7 @@ storage_nodes:
     rpc_url: https://walrus.testnet.arcadia.global
     rest_url: https://walrus-storage.testnet.arcadia.global/v1
 EOF
-      sudo -u ${config.system.primaryUser} mv /tmp/walrus-config.yaml /Users/${config.system.primaryUser}/.config/walrus/client_config.yaml
+      sudo -u ${config.system.primaryUser} mv /tmp/walrus-config.yaml "$USER_HOME/.config/walrus/client_config.yaml"
       
       echo "Walrus CLI installed and configured for testnet!"
     else
