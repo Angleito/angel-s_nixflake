@@ -150,77 +150,60 @@
   home.activation.claudeConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
     CLAUDE_CONFIG_PATH="$HOME/.claude.json"
     
-    # Create the config content
+    # Source the .env file if it exists
+    if [ -f "$HOME/Projects/nix-project/.env" ]; then
+      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+    fi
+    
+    # Create the config content with environment variables
     cat > "$CLAUDE_CONFIG_PATH" << 'EOF'
-${builtins.toJSON (let
-    # Read environment variables with fallbacks
-    tavilyKey = builtins.getEnv "TAVILY_API_KEY";
-    braveKey = builtins.getEnv "BRAVE_API_KEY";
-    kagiKey = builtins.getEnv "KAGI_API_KEY";
-    perplexityKey = builtins.getEnv "PERPLEXITY_API_KEY";
-    jinaKey = builtins.getEnv "JINA_AI_API_KEY";
-    firecrawlKey = builtins.getEnv "FIRECRAWL_API_KEY";
-  in {
-    numStartups = 0;
-    autoUpdaterStatus = "enabled";
-    theme = "dark";
-    hasCompletedOnboarding = true;
-    
-    # Global MCP servers - available to all projects
-    mcpServers = {
-      # Basic MCP servers
-      filesystem = {
-        command = "npx";
-        args = [
-          "-y"
-          "@modelcontextprotocol/server-filesystem"
-          "/Users/${config.home.username}"
-          "/Users/${config.home.username}/Projects"
-          "/Users/${config.home.username}/Documents"
-        ];
-      };
-      
-      memory = {
-        command = "npx";
-        args = ["-y" "@modelcontextprotocol/server-memory"];
-      };
-      
-      sequential-thinking = {
-        command = "npx";
-        args = ["-y" "@modelcontextprotocol/server-sequential-thinking"];
-      };
-      
-      # Browser automation servers
-      puppeteer = {
-        command = "npx";
-        args = ["-y" "@modelcontextprotocol/server-puppeteer"];
-      };
-      
-      playwright = {
-        command = "npx";
-        args = ["-y" "@microsoft/mcp-server-playwright"];
-      };
-      
-      # Omnisearch server - combines multiple search and AI tools
-      mcp-omnisearch = {
-        command = "npx";
-        args = ["-y" "mcp-omnisearch"];
-        env = {
-          TAVILY_API_KEY = if tavilyKey != "" then tavilyKey else "";
-          BRAVE_API_KEY = if braveKey != "" then braveKey else "";
-          KAGI_API_KEY = if kagiKey != "" then kagiKey else "";
-          PERPLEXITY_API_KEY = if perplexityKey != "" then perplexityKey else "";
-          JINA_AI_API_KEY = if jinaKey != "" then jinaKey else "";
-          FIRECRAWL_API_KEY = if firecrawlKey != "" then firecrawlKey else "";
-        };
-      };
-    };
-    
-    # Example project-specific configuration
-    projects = {
-      # This will be populated by individual projects
-    };
-  })}
+{
+  "numStartups": 0,
+  "autoUpdaterStatus": "enabled",
+  "theme": "dark",
+  "hasCompletedOnboarding": true,
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/${config.home.username}",
+        "/Users/${config.home.username}/Projects",
+        "/Users/${config.home.username}/Documents"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@microsoft/mcp-server-playwright"]
+    },
+    "mcp-omnisearch": {
+      "command": "npx",
+      "args": ["-y", "mcp-omnisearch"],
+      "env": {
+        "TAVILY_API_KEY": "''${TAVILY_API_KEY:-}",
+        "BRAVE_API_KEY": "''${BRAVE_API_KEY:-}",
+        "KAGI_API_KEY": "''${KAGI_API_KEY:-}",
+        "PERPLEXITY_API_KEY": "''${PERPLEXITY_API_KEY:-}",
+        "JINA_AI_API_KEY": "''${JINA_AI_API_KEY:-}",
+        "FIRECRAWL_API_KEY": "''${FIRECRAWL_API_KEY:-}"
+      }
+    }
+  },
+  "projects": {}
+}
 EOF
     
     # Make the file writable
