@@ -116,22 +116,39 @@
       fi
       
       # Install Sui using cargo (Rust package manager) with better error handling
-      if sudo -u ${config.system.primaryUser} bash -c "export HOME=$USER_HOME; export CARGO_HOME=$USER_HOME/.cargo; ${pkgs.rustup}/bin/cargo --version" &> /dev/null; then
+      if sudo -u ${config.system.primaryUser} bash -c "
+        export HOME=$USER_HOME
+        export RUSTUP_HOME=$USER_HOME/.rustup
+        export CARGO_HOME=$USER_HOME/.cargo
+        export PATH=$USER_HOME/.cargo/bin:\$PATH
+        ${pkgs.rustup}/bin/cargo --version
+      " &> /dev/null; then
         echo "Installing Sui CLI via cargo..."
         if sudo -u ${config.system.primaryUser} bash -c "
           export HOME=$USER_HOME
           export RUSTUP_HOME=$USER_HOME/.rustup
           export CARGO_HOME=$USER_HOME/.cargo
+          export PATH=$USER_HOME/.cargo/bin:\$PATH
           ${pkgs.rustup}/bin/cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui
         "; then
           echo "Sui CLI installed successfully via cargo!"
         else
           echo "Cargo installation failed. Falling back to npm..."
-          sudo -u ${config.system.primaryUser} "$NPM_BIN" install -g @mysten/sui
+          sudo -u ${config.system.primaryUser} bash -c "
+            export HOME=$USER_HOME
+            export NPM_CONFIG_PREFIX=$USER_HOME/.npm-global
+            export NPM_CONFIG_CACHE=$USER_HOME/.npm-cache
+            $NPM_BIN install -g @mysten/sui
+          "
         fi
       else
         echo "Cargo not available. Installing Sui via npm as fallback..."
-        sudo -u ${config.system.primaryUser} "$NPM_BIN" install -g @mysten/sui
+        sudo -u ${config.system.primaryUser} bash -c "
+          export HOME=$USER_HOME
+          export NPM_CONFIG_PREFIX=$USER_HOME/.npm-global
+          export NPM_CONFIG_CACHE=$USER_HOME/.npm-cache
+          $NPM_BIN install -g @mysten/sui
+        "
       fi
     else
       echo "Sui CLI is already installed"
