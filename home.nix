@@ -94,9 +94,13 @@
       # Add local bin to PATH
       export PATH="$HOME/.local/bin:$PATH"
       
-      # Source .env file from nix-project if it exists
-      if [ -f "$HOME/Projects/nix-project/.env" ]; then
+      # Source .env file - check multiple locations
+      if [ -f "./.env" ]; then
+        export $(grep -v '^#' "./.env" | xargs)
+      elif [ -f "$HOME/Projects/nix-project/.env" ]; then
         export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+      elif [ -f "$HOME/.env" ]; then
+        export $(grep -v '^#' "$HOME/.env" | xargs)
       fi
       
       # Starship prompt
@@ -130,9 +134,13 @@
 
   # Create claude wrapper script with permissions bypass
   home.file.".local/bin/claude".text = ''#!/bin/bash
-    # Source .env file from nix-project if it exists
-    if [ -f "$HOME/Projects/nix-project/.env" ]; then
+    # Source .env file - check multiple locations
+    if [ -f "./.env" ]; then
+      export $(grep -v '^#' "./.env" | xargs)
+    elif [ -f "$HOME/Projects/nix-project/.env" ]; then
       export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+    elif [ -f "$HOME/.env" ]; then
+      export $(grep -v '^#' "$HOME/.env" | xargs)
     fi
     
     # Force shell to recognize the new command
@@ -150,13 +158,17 @@
   home.activation.claudeConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
     CLAUDE_CONFIG_PATH="$HOME/.claude.json"
     
-    # Source the .env file if it exists
-    if [ -f "$HOME/Projects/nix-project/.env" ]; then
-      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+    # Source the .env file - check multiple locations
+    if [ -f "./.env" ]; then
+      export $(grep -v '^#' "./.env" | xargs)
+    elif [ -f "$HOME/Projects/nix-project/.env" ]; then
+      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)  
+    elif [ -f "$HOME/.env" ]; then
+      export $(grep -v '^#' "$HOME/.env" | xargs)
     fi
     
     # Create the config content with environment variables
-    cat > "$CLAUDE_CONFIG_PATH" << 'EOF'
+    cat > "$CLAUDE_CONFIG_PATH" << EOF
 {
   "numStartups": 0,
   "autoUpdaterStatus": "enabled",
@@ -193,12 +205,12 @@
       "command": "npx",
       "args": ["-y", "mcp-omnisearch"],
       "env": {
-        "TAVILY_API_KEY": "''${TAVILY_API_KEY:-}",
-        "BRAVE_API_KEY": "''${BRAVE_API_KEY:-}",
-        "KAGI_API_KEY": "''${KAGI_API_KEY:-}",
-        "PERPLEXITY_API_KEY": "''${PERPLEXITY_API_KEY:-}",
-        "JINA_AI_API_KEY": "''${JINA_AI_API_KEY:-}",
-        "FIRECRAWL_API_KEY": "''${FIRECRAWL_API_KEY:-}"
+        "TAVILY_API_KEY": "$TAVILY_API_KEY",
+        "BRAVE_API_KEY": "$BRAVE_API_KEY",
+        "KAGI_API_KEY": "$KAGI_API_KEY",
+        "PERPLEXITY_API_KEY": "$PERPLEXITY_API_KEY",
+        "JINA_AI_API_KEY": "$JINA_AI_API_KEY",
+        "FIRECRAWL_API_KEY": "$FIRECRAWL_API_KEY"
       }
     }
   },

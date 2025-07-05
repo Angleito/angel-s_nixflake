@@ -5,6 +5,25 @@ set -e
 
 echo "🔧 Generating Claude Code configuration..."
 
+# Source the .env file to get API keys
+# First check in current directory, then in common locations
+if [ -f "./.env" ]; then
+  echo "📋 Loading API keys from ./.env file..."
+  set -a
+  source "./.env"
+  set +a
+elif [ -f "$HOME/Projects/nix-project/.env" ]; then
+  echo "📋 Loading API keys from ~/Projects/nix-project/.env file..."
+  set -a
+  source "$HOME/Projects/nix-project/.env"
+  set +a
+elif [ -f "$HOME/.env" ]; then
+  echo "📋 Loading API keys from ~/.env file..."
+  set -a
+  source "$HOME/.env"
+  set +a
+fi
+
 # Create directories
 mkdir -p ~/.claude/commands/frontend ~/.claude/commands/backend ~/.local/bin
 
@@ -89,6 +108,15 @@ EOF
 echo "Creating claude wrapper script..."
 cat > ~/.local/bin/claude << 'EOF'
 #!/bin/bash
+# Source .env file - check multiple locations
+if [ -f "./.env" ]; then
+  export $(grep -v '^#' "./.env" | xargs)
+elif [ -f "$HOME/Projects/nix-project/.env" ]; then
+  export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+elif [ -f "$HOME/.env" ]; then
+  export $(grep -v '^#' "$HOME/.env" | xargs)
+fi
+
 # Refresh shell command cache to ensure all commands are available
 hash -r
 

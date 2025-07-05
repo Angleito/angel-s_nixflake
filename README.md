@@ -21,6 +21,25 @@ This configuration implements several privacy safeguards to protect your persona
 - This allows automated testing without exposing real user information
 - The `.env.sample` file provides the template with safe default values
 
+### 4. API Keys for MCP Omnisearch
+For Claude Code's MCP omnisearch functionality, create a `.env` file in one of these locations:
+- `./.env` (current directory when running claude)
+- `~/Projects/nix-project/.env` (default project location)
+- `~/.env` (home directory)
+
+Add your API keys (all optional):
+```bash
+# Search providers
+TAVILY_API_KEY=your_key_here
+BRAVE_API_KEY=your_key_here
+KAGI_API_KEY=your_key_here
+PERPLEXITY_API_KEY=your_key_here
+
+# Content processing
+JINA_AI_API_KEY=your_key_here
+FIRECRAWL_API_KEY=your_key_here
+```
+
 ## 🚀 Quick Start
 
 ### Prerequisites
