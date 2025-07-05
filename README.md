@@ -1,6 +1,6 @@
-# Angel's Nix Darwin Configuration with Claude Code
+# Angel's Pure Nix Darwin Configuration
 
-A complete macOS system configuration using Nix Darwin and Home Manager with **comprehensive Claude Code integration**. This setup allows you to automatically install and configure your entire development environment, including a fully configured Claude Code environment with custom commands and MCP servers, with a single command.
+A complete macOS system configuration using **pure Nix architecture** with modular design. This setup eliminates shell script complexity and provides declarative package management for your entire development environment with a single command.
 
 ## Privacy Safeguards
 
@@ -31,49 +31,55 @@ This configuration implements several privacy safeguards to protect your persona
 
 1. **Clone this repository:**
    ```bash
-   git clone https://github.com/Angleito/angel-s_nixflake.git
-   cd angel-s_nixflake
+   git clone https://github.com/Angleito/angelsnixconfig.git
+   cd angelsnixconfig
    ```
 
-2. **Run the bootstrap script:**
+2. **Run the installation script:**
    ```bash
-   ./bootstrap.sh
+   ./install.sh
    ```
 
    The script will:
    - Check for Nix (provides installation instructions if missing)
-   - Set up your personal environment variables
-   - Install all required dependencies
-   - Configure your system automatically
-   - Install Claude Code from nixpkgs
-   - Set up complete Claude Code configuration with custom commands
-   - Configure MCP servers for enhanced capabilities
+   - Install nix-darwin if not present
+   - Install Homebrew for GUI applications
+   - Apply the complete system configuration
+   - Install all packages and applications declaratively
 
 3. **Restart your terminal** to load the new configuration
 
-4. **Start Claude Code:**
-   ```bash
-   claude
-   ```
+**Alternative installation methods:**
+```bash
+# Using the flake app
+nix run .#install
+
+# Manual installation
+sudo darwin-rebuild switch --flake .
+```
 
 ## 📦 What Gets Installed
 
-### GUI Applications
+### GUI Applications (via Homebrew)
 - **Warp** - AI-powered terminal
 - **Cursor** - AI code editor  
 - **Brave Browser** - Privacy-focused browser
 - **Orbstack** - Docker/container management
+- **Zoom** - Video conferencing
+- **Slack** - Team messaging
+- **GarageBand** - Music creation (Mac App Store)
 
-### Development Tools
+### Development Tools (Pure Nix Packages)
 - **Languages:** Node.js, Python, Go, Rust
 - **Version Control:** Git, GitHub CLI, Lazygit
 - **Containers:** Docker, Docker Compose
-- **AI Tools:**
-  - **Claude Code CLI** (from nixpkgs) - Complete configuration with custom commands
-  - Sui CLI, Walrus CLI, Sei CLI (npm-based)
+- **Web3 Tools:**
+  - **Sui CLI** - Custom Nix package with npm wrapper
+  - **Walrus CLI** - Custom Nix package with binary download
+  - **Vercel CLI** - Custom Nix package with npm wrapper
 - **CLI Tools:** ripgrep, fzf, bat, eza, htop, and more
 - **Shell:** Zsh with autosuggestions, syntax highlighting, and Starship prompt
-- **Package Management:** npm configured globally in user directory
+- **AI Tools:** Claude Code CLI with comprehensive configuration
 
 ## 🤖 Claude Code Configuration
 
@@ -202,28 +208,65 @@ claude
 > /user:debug "authentication not working"
 ```
 
+## 🏗️ Pure Nix Architecture
+
+This configuration uses a **pure Nix modular architecture** that eliminates complex shell scripts:
+
+### Key Features
+- **Custom Package Overlays**: Web3 tools (Sui, Walrus, Vercel) as proper Nix packages
+- **Modular Configuration**: Separate modules for development, system settings, and applications
+- **Declarative Management**: Everything defined in Nix expressions
+- **No Shell Script Complexity**: Eliminates activation script issues and variable escaping
+
+### Architecture Overview
+```
+├── flake.nix                 # Main flake with overlays and outputs
+├── pkgs/                     # Custom package definitions
+│   ├── default.nix          # Package overlay
+│   ├── sui-cli/             # Sui CLI Nix package
+│   ├── walrus-cli/          # Walrus CLI Nix package
+│   └── vercel-cli/          # Vercel CLI Nix package
+├── modules/                  # Modular system configuration
+│   ├── default.nix          # Module entry point
+│   ├── development/         # Development tools modules
+│   └── system/              # System configuration modules
+├── darwin-configuration.nix  # Main system configuration
+└── home.nix                 # Home Manager configuration
+```
+
 ## 🔧 Configuration
 
-### Adding/Removing Applications
+### Adding Custom Packages
+
+**Custom Web3 Tools** (in `modules/development/web3.nix`):
+```nix
+development.web3 = {
+  enable = true;
+  enableSui = true;      # Custom Sui CLI package
+  enableWalrus = true;   # Custom Walrus CLI package  
+  enableVercel = true;   # Custom Vercel CLI package
+};
+```
 
 **GUI Applications** (in `darwin-configuration.nix`):
 ```nix
-casks = [
+homebrew.casks = [
   "warp"
-  "cursor"
+  "cursor" 
   "brave-browser"
   "orbstack"
   # Add new apps here
 ];
 ```
 
-**CLI Tools** (in `home.nix`):
+**System Packages** (in `modules/development/`):
 ```nix
-home.packages = with pkgs; [
-  nodejs_20
-  python3
-  # Add new tools here
-];
+# Enable entire module categories
+development = {
+  rust.enable = true;
+  nodejs.enable = true;
+  web3.enable = true;
+};
 ```
 
 ### Applying Changes
@@ -231,23 +274,28 @@ home.packages = with pkgs; [
 After making any configuration changes:
 
 ```bash
-rebuild  # Alias for: darwin-rebuild switch --flake .
+sudo darwin-rebuild switch --flake .
 ```
 
-Or if you've changed your `.env` file:
-
+**Available flake commands:**
 ```bash
-direnv allow && rebuild
+# Build and test
+nix flake check                    # Validate configuration
+nix build .#packages.aarch64-darwin.sui-cli  # Build custom packages
+
+# Run apps
+nix run .#sui                      # Run Sui CLI
+nix run .#deploy                   # Deploy configuration
+nix run .#install                  # Install from scratch
 ```
 
 ## 🛠️ Useful Commands
 
 ### System Management
-- `rebuild` - Apply system configuration changes
-- `update` - Update all flake inputs to latest versions
-- `direnv allow` - Reload environment variables
-- `darwin-rebuild switch --flake .` - Full rebuild command
-- `./bootstrap.sh` - Complete setup from scratch
+- `sudo darwin-rebuild switch --flake .` - Apply configuration changes
+- `nix flake update` - Update all flake inputs to latest versions
+- `nix flake check` - Validate configuration
+- `./install.sh` - Complete setup from scratch
 
 ### Claude Code
 - `claude` - Start Claude Code CLI (with permissions bypass for development)
@@ -259,21 +307,37 @@ direnv allow && rebuild
 - `/user:frontend:component [name]` - Generate React/Vue component
 - `/user:backend:api [name]` - Generate API endpoint
 
-### Other CLI Tools
-- `sui`, `walrus`, `sei` - Blockchain CLI tools (npm-based)
+### Custom CLI Tools
+- `sui` - Sui blockchain CLI (custom Nix package)
+- `walrus` - Walrus decentralized storage CLI (custom Nix package)  
+- `vercel` - Vercel deployment CLI (custom Nix package)
 
 ## 📁 Project Structure
 
 ```
 .
-├── darwin-configuration.nix  # System-level configuration and GUI apps
-├── home.nix                 # User packages and dotfiles
+├── flake.nix                 # Main flake with overlays and packages
+├── flake.lock                # Locked flake dependencies  
+├── darwin-configuration.nix  # System-level configuration
+├── home.nix                 # Home Manager configuration
 ├── home/
 │   └── git.nix             # Git configuration with SSH setup
-├── flake.nix               # Nix flake definition
-├── flake.lock              # Locked flake dependencies
+├── pkgs/                    # Custom package definitions
+│   ├── default.nix         # Package overlay
+│   ├── sui-cli/            # Sui CLI custom package
+│   ├── walrus-cli/         # Walrus CLI custom package
+│   └── vercel-cli/         # Vercel CLI custom package
+├── modules/                 # Modular configuration system
+│   ├── default.nix         # Module entry point
+│   ├── development/        # Development tools modules
+│   │   ├── rust.nix       # Rust development setup
+│   │   ├── nodejs.nix     # Node.js development setup
+│   │   └── web3.nix       # Web3 tools configuration
+│   └── system/            # System configuration modules
+│       ├── defaults.nix   # macOS system defaults
+│       ├── power.nix      # Power management settings
+│       └── xcode.nix      # Xcode command line tools
 ├── install.sh              # Automated installation script
-├── setup-ssh.sh            # SSH key generation for GitHub
 ├── .env.sample             # Template for personal variables
 ├── .env                    # Personal variables (git-ignored)
 └── .envrc                  # Direnv configuration
@@ -281,18 +345,19 @@ direnv allow && rebuild
 
 ## 🔒 Security & Privacy
 
-- `.env` file is git-ignored and never committed
-- Personal information is injected at build time only
-- CI/CD systems use placeholder values
-- SSH keys are generated locally and stored in macOS Keychain
-- npm global packages installed in user directory (no sudo required)
-- Nix build results (`result` symlink) are git-ignored
+- **Pure Nix Architecture**: No complex shell scripts with potential vulnerabilities
+- **Declarative Packages**: All tools defined as proper Nix packages with controlled dependencies
+- **No Hardcoded Secrets**: Configuration validated to contain no API keys or passwords
+- **Secure Downloads**: All downloads use HTTPS from official sources
+- **Environment Isolation**: `.env` file is git-ignored and never committed
+- **Controlled Execution**: All `exec` calls use proper wrapper scripts with error handling
+- **macOS Integration**: Uses macOS Keychain for secure credential storage
 
 ## 🆘 Troubleshooting
 
 **Nix not found:**
 ```bash
-sh <(curl -L https://nixos.org/nix/install)
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 ```
 
 **Permission denied on install.sh:**
@@ -300,12 +365,24 @@ sh <(curl -L https://nixos.org/nix/install)
 chmod +x install.sh
 ```
 
-**Claude command not found in new terminals:**
-- The setup automatically adds `~/.local/bin` to your PATH in `~/.zshrc`
-- If issues persist, run: `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc`
-- Then restart your terminal or run `source ~/.zshrc`
+**Build failures:**
+```bash
+# Validate flake configuration
+nix flake check
+
+# Test individual packages
+nix build .#packages.aarch64-darwin.sui-cli
+
+# Test system configuration
+nix build .#darwinConfigurations.angels-MacBook-Pro.system
+```
+
+**Custom packages not working:**
+- Ensure flake is committed to git: `git add . && git commit -m "update config"`
+- Check package definitions in `pkgs/` directory
+- Verify overlay is properly imported in `flake.nix`
 
 **Apps not appearing after install:**
 - Restart your terminal
-- Check `/Applications` folder
-- Run `rebuild` to retry
+- Check `/Applications` folder  
+- Run `sudo darwin-rebuild switch --flake .` to retry
