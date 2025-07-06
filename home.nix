@@ -189,10 +189,6 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-memory"]
     },
-    "sequential-thinking": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
-    },
     "puppeteer": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
@@ -458,79 +454,366 @@ Provide:
 Focus on accuracy, comprehensiveness, and actionable insights.
 EOF
     
-    cat > "$HOME/.claude/commands/parallel-workflow.md" << 'EOF'
+    cat > "$HOME/.claude/commands/workflow.md" << 'EOF'
 ---
-allowed-tools: Task, TodoRead, TodoWrite, Read, Grep, Bash(git:*), Bash(npm:*)
-description: Orchestrate parallel Task agents for large workflows
+allowed-tools: Task, TodoRead, TodoWrite, Read, Grep, Bash(git:*), Bash(npm:*), WebFetch
+description: Execute efficient multi-agent workflows with code-reuse, ultrathink, and omnisearch
 ---
 
-# Parallel Workflow Orchestrator
+# Workflow Orchestrator
 
-Execute large workflows using parallel Task tool sub-agents with intelligent batching and coordination.
+Execute efficient workflows using parallel Task tool sub-agents with intelligent coordination.
 
 ## Workflow: $ARGUMENTS
 
+## Core Principles
+
+1. **Reuse code from the repo** - Always check for existing implementations before creating new ones
+2. **Edit existing files and use existing folders** - Modify what's there before creating new structures
+3. **Use ultrathink and omnisearch** - Leverage advanced planning and research capabilities
+4. **Create short, efficient, and modular code** - Focus on clarity and maintainability
+5. **Always separate concerns** - Each module should have a single, clear responsibility
+6. **Execute plans in parallel** - Use multiple Task tool sub-agents for efficiency
+7. **Prevent agent collisions** - Ensure agents work on different files/directories
+8. **Follow order of operations** - Respect sequential dependencies
+
 ## Execution Strategy
 
-### Phase 1: Task Analysis and Planning
-First, I'll analyze the requested workflow and break it down into:
-- **Independent tasks**: Can be executed in parallel without conflicts
-- **Sequential dependencies**: Must be executed in order
-- **Resource-intensive tasks**: Should be limited per batch
+### Phase 1: Planning with Ultrathink
+Use ultrathink for complex workflow decomposition:
+- Analyze the complete scope of work
+- Identify reusable components in the codebase
+- Plan modular architecture
 
-### Phase 2: Batch Orchestration
-Execute tasks in optimized batches:
-- **Batch size**: Maximum 10 parallel agents per batch
-- **Collision prevention**: Each agent works on specific files/directories
-- **Progress tracking**: Monitor completion via TodoRead/TodoWrite
+### Phase 2: Research with Omnisearch
+Leverage omnisearch for gathering context:
+- Search for best practices and patterns
+- Find existing solutions to adapt
+- Validate architectural decisions
 
-### Phase 3: Task Agent Instructions
-Each Task agent will receive:
-1. **Specific scope**: Clear boundaries (files/directories to work on)
-2. **Isolation requirements**: Avoid modifying shared resources
-3. **Output format**: Structured results for aggregation
-4. **Error handling**: Report failures without blocking other agents
+### Phase 3: Parallel Execution
+Deploy Task agents efficiently:
+- **Maximum 10 agents per batch** to prevent resource exhaustion
+- **Clear file/directory boundaries** for each agent
+- **Atomic operations** that can succeed or fail independently
 
-### Phase 4: Synchronization Points
-Between batches:
-- **Verify completion**: Check all agents finished successfully
-- **Resolve conflicts**: Handle any file conflicts if they arise
-- **Update progress**: Mark todos as completed
-- **Plan next batch**: Based on dependencies and results
+### Phase 4: Coordination
+Ensure smooth workflow:
+- Agents declare their working files upfront
+- Sequential dependencies respected
+- Progress tracked via TodoRead/TodoWrite
+- Conflicts resolved between batches
 
-## Example Workflow Breakdown
+## Example Workflow
 
-For a request like "Refactor all components to use TypeScript":
-1. **Batch 1**: Analyze and list all components (1 agent)
-2. **Batch 2**: Convert simple components (10 agents, 1 per component)
-3. **Batch 3**: Convert complex components (5 agents for resource-intensive work)
-4. **Batch 4**: Update imports and tests (10 agents for different modules)
-5. **Batch 5**: Final verification and cleanup (1 agent)
+For "Implement authentication system":
+1. **Ultrathink planning**: Decompose into auth provider, middleware, UI components
+2. **Omnisearch research**: Find best practices for the chosen auth method
+3. **Parallel execution**:
+   - Agent 1: Set up auth provider configuration
+   - Agent 2: Create middleware functions
+   - Agent 3: Build login/logout UI components
+   - Agent 4: Add authentication to existing routes
+4. **Integration**: Final agent merges all components
 
-## Coordination Rules
+## Key Guidelines
 
-1. **File locking**: Agents declare which files they'll modify upfront
-2. **Directory isolation**: Prefer agents working in separate directories
-3. **Merge strategy**: Later batches handle integration of earlier work
-4. **Rollback capability**: Each batch creates a checkpoint
+- **Code Reuse**: Always `grep` for existing patterns first
+- **Modularity**: Each file should export focused functionality
+- **Efficiency**: Minimize code duplication and complexity
+- **Order**: Respect build dependencies and import chains
+- **Safety**: Each agent's work should be independently testable
 
-## Progress Reporting
+This orchestrator ensures efficient parallel execution while maintaining code quality and architectural integrity.
+EOF
+    
+    cat > "$HOME/.claude/commands/design.md" << 'EOF'
+---
+allowed-tools: Read, Edit, MultiEdit, Write, Grep
+description: shadcn/ui with Tailwind v4 design system guidelines and best practices
+---
 
-Regular updates will include:
-- Current batch number and size
-- Completed vs pending tasks
-- Any failures or conflicts
-- Estimated remaining time
+# shadcn/ui with Tailwind v4 Design System Guidelines
 
-## Failure Handling
+This document outlines design principles and implementation guidelines for applications using shadcn/ui with Tailwind v4. These guidelines ensure consistency, accessibility, and best practices throughout the UI development process.
 
-If any agent fails:
-1. Continue with other agents in the batch
-2. Collect all failure reports
-3. Attempt retry with adjusted strategy
-4. Report unrecoverable failures to user
+## Core Design Principles
 
-This orchestrator ensures efficient parallel execution while maintaining code quality and preventing conflicts between concurrent operations.
+### 1. Typography System: 4 Sizes, 2 Weights
+- **4 Font Sizes Only**:
+  - Size 1: Large headings
+  - Size 2: Subheadings/Important content
+  - Size 3: Body text
+  - Size 4: Small text/labels
+- **2 Font Weights Only**:
+  - Semibold: For headings and emphasis
+  - Regular: For body text and general content
+- **Consistent Hierarchy**: Maintain clear visual hierarchy with limited options
+
+### 2. 8pt Grid System
+- **All spacing values must be divisible by 8 or 4**
+- **Examples**:
+  - Instead of 25px padding → Use 24px (divisible by 8)
+  - Instead of 11px margin → Use 12px (divisible by 4)
+- **Consistent Rhythm**: Creates visual harmony throughout the interface
+
+### 3. 60/30/10 Color Rule
+- **60%**: Neutral color (white/light gray)
+- **30%**: Complementary color (dark gray/black)
+- **10%**: Main brand/accent color (e.g., red, blue)
+- **Color Balance**: Prevents visual stress while maintaining hierarchy
+
+### 4. Clean Visual Structure
+- **Logical Grouping**: Related elements should be visually connected
+- **Deliberate Spacing**: Spacing between elements should follow the grid system
+- **Alignment**: Elements should be properly aligned within their containers
+- **Simplicity Over Flashiness**: Focus on clarity and function first
+
+## Foundation
+
+### Tailwind v4 Integration
+- **Use Tailwind CSS v4 for styling**: Leverage the latest Tailwind features including the new @theme directive, dynamic utility values, and OKLCH colors. [Tailwind CSS v4 Documentation](mdc:https://tailwindcss.com/docs)
+- **Modern browsing features**: Tailwind v4 uses bleeding-edge browser features and is designed for modern browsers.
+- **Simplified installation**: Fewer dependencies, zero configuration required in many cases.
+- **shadcn/ui v4 demo**: Reference the demo site for component examples. [shadcn/ui v4 Demo](mdc:https://v4.shadcn.com/)
+
+### New CSS Structure
+- **Replace @layer base with @theme directive**:
+  ```css
+  /* Old approach in v3 */
+  @layer base {
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 0 0% 3.9%;
+    }
+  }
+  
+  /* New approach in v4 */
+  @theme {
+    --color-background: hsl(var(--background));
+    --color-foreground: hsl(var(--foreground));
+  }
+  ```
+- **Tailwind imports**: Use `@import "tailwindcss"` instead of `@tailwind base`
+- **Container queries**: Built-in support without plugins
+- **OKLCH color format**: Updated from HSL for better color perception
+
+## Typography System
+
+### Font Sizes & Weights
+- **Strictly limit to 4 distinct sizes**:
+  - Size 1: Large headings (largest)
+  - Size 2: Subheadings
+  - Size 3: Body text
+  - Size 4: Small text/labels (smallest)
+- **Only use 2 font weights**:
+  - Semibold: For headings and emphasis
+  - Regular: For body text and most UI elements
+- **Common mistakes to avoid**:
+  - Using more than 4 font sizes
+  - Introducing additional font weights
+  - Inconsistent size application
+
+### Typography Implementation
+- **Reference shadcn's typography primitives** for consistent text styling
+- **Use monospace variant** for numerical data when appropriate
+- **data-slot attribute**: Every shadcn/ui primitive now has a data-slot attribute for styling
+- **Maintain hierarchy** using consistent sizing patterns
+
+## 8pt Grid System
+
+### Spacing Guidelines
+- **All spacing values MUST be divisible by 8 or 4**:
+  - ✅ DO: Use 8, 16, 24, 32, 40, 48, etc.
+  - ❌ DON'T: Use 25, 11, 7, 13, etc.
+
+- **Practical examples**:
+  - Instead of 25px padding → Use 24px (divisible by 8)
+  - Instead of 11px margin → Use 12px (divisible by 4)
+  - Instead of 15px gap → Use 16px (divisible by 8)
+
+- **Use Tailwind's spacing utilities**:
+  - p-4 (16px), p-6 (24px), p-8 (32px)
+  - m-2 (8px), m-4 (16px), m-6 (24px)
+  - gap-2 (8px), gap-4 (16px), gap-8 (32px)
+
+- **Why this matters**:
+  - Creates visual harmony
+  - Simplifies decision-making
+  - Establishes predictable patterns
+
+### Implementation
+- **Tailwind v4 dynamic spacing**: Spacing utilities accept any value without arbitrary syntax
+- **Consistent component spacing**: Group related elements with matching gap values
+- **Check responsive behavior**: Ensure grid system holds at all breakpoints
+
+## 60/30/10 Color Rule
+
+### Color Distribution
+- **60%**: neutral color (bg-background)
+  - Usually white or light gray in light mode
+  - Dark gray or black in dark mode
+  - Used for primary backgrounds, cards, containers
+
+- **30%**: complementary color (text-foreground)
+  - Usually dark gray or black in light mode
+  - Light gray or white in dark mode
+  - Used for text, icons, subtle UI elements
+
+- **10%**: accent color (brand color)
+  - Your primary brand color (red, blue, etc.)
+  - Used sparingly for call-to-action buttons, highlights, important indicators
+  - Avoid overusing to prevent visual stress
+
+### Common Mistakes
+- ❌ Overusing accent colors creates visual stress
+- ❌ Not enough contrast between background and text
+- ❌ Too many competing accent colors (stick to one primary accent)
+
+### Implementation with shadcn/ui
+- **Background/foreground convention**: Each component uses the background/foreground pattern
+- **CSS variables in globals.css**:
+  ```css
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    /* Additional variables */
+  }
+  
+  @theme {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    /* Register other variables */
+  }
+  ```
+- **OKLCH color format**: More accessible colors, especially in dark mode
+- **Reserve accent colors** for important elements that need attention
+
+## Component Architecture
+
+### shadcn/ui Component Structure
+- **2-layered architecture**:
+  1. Structure and behavior layer (Radix UI primitives)
+  2. Style layer (Tailwind CSS)
+- **Class Variance Authority (CVA)** for variant styling
+- **data-slot attribute** for styling component parts
+
+### Implementation
+- **Install components individually** using CLI (updated for v4) or manual installation
+- **Component customization**: Modify components directly as needed
+- **Radix UI primitives**: Base components for accessibility and behavior
+- **New-York style**: Default recommended style for new projects (deprecated "default" style)
+
+## Visual Hierarchy
+
+### Design Principles
+- **Simplicity over flashiness**: Focus on clarity and usability
+- **Emphasis on what matters**: Highlight important elements
+- **Reduced cognitive load**: Use consistent terminology and patterns
+- **Visual connection**: Connect related UI elements through consistent patterns
+
+### Implementation
+- **Use shadcn/ui Blocks** for common UI patterns
+- **Maintain consistent spacing** between related elements
+- **Align elements properly** within containers
+- **Logical grouping** of related functionality
+
+## Installation & Setup
+
+### Project Setup
+- **CLI initialization**:
+  ```bash
+  npx create-next-app@latest my-app
+  cd my-app
+  npx shadcn-ui@latest init
+  ```
+- **Manual setup**: Follow the guide at [Manual Installation](mdc:https://ui.shadcn.com/docs/installation/manual)
+- **components.json configuration**:
+  ```json
+  {
+    "style": "new-york",
+    "rsc": true,
+    "tailwind": {
+      "config": "",
+      "css": "app/globals.css",
+      "baseColor": "neutral",
+      "cssVariables": true
+    },
+    "aliases": {
+      "components": "@/components",
+      "utils": "@/lib/utils"
+    }
+  }
+  ```
+
+### Adding Components
+- **Use the CLI**: `npx shadcn-ui@latest add button`
+- **Install dependencies**: Required for each component
+- **Find components**: [Component Reference](mdc:https://ui.shadcn.com/docs/components)
+
+## Advanced Features
+
+### Dark Mode
+- **Updated dark mode colors** for better accessibility using OKLCH
+- **Consistent contrast ratios** across light and dark themes
+- **Custom variant**: `@custom-variant dark (&:is(.dark *))`
+
+### Container Queries
+- **Built-in support** without plugins
+- **Responsive components** that adapt to their container size
+- **@min-* and @max-* variants** for container query ranges
+
+### Data Visualization
+- **Chart components**: Use with consistent styling
+- **Consistent color patterns**: Use chart-1 through chart-5 variables
+
+## Experience Design
+
+### Motion & Animation
+- **Consider transitions** between screens and states
+- **Animation purpose**: Enhance usability, not distract
+- **Consistent motion patterns**: Similar elements should move similarly
+
+### Implementation
+- **Test experiences** across the entire flow
+- **Design with animation in mind** from the beginning
+- **Balance speed and smoothness** for optimal user experience
+
+## Resources
+
+- [shadcn/ui Documentation](mdc:https://ui.shadcn.com/docs)
+- [Tailwind CSS v4 Documentation](mdc:https://tailwindcss.com/docs)
+- [shadcn/ui GitHub Repository](mdc:https://github.com/shadcn/ui)
+- [Tailwind v4 Upgrade Guide](mdc:https://tailwindcss.com/docs/upgrade-guide)
+- [shadcn/ui v4 Demo](mdc:https://v4.shadcn.com/)
+- [Figma Design System](mdc:https://www.figma.com/community/file/1203061493325953101/shadcn-ui-design-system)
+
+## Code Review Checklist
+
+### Core Design Principles
+- [ ] Typography: Uses only 4 font sizes and 2 font weights (Semibold, Regular)
+- [ ] Spacing: All spacing values are divisible by 8 or 4
+- [ ] Colors: Follows 60/30/10 color distribution (60% neutral, 30% complementary, 10% accent)
+- [ ] Structure: Elements are logically grouped with consistent spacing
+
+### Technical Implementation
+- [ ] Uses proper OKLCH color variables
+- [ ] Leverages @theme directive for variables
+- [ ] Components implement data-slot attribute properly
+- [ ] Visual hierarchy is clear and consistent
+- [ ] Components use Class Variance Authority for variants
+- [ ] Dark mode implementation is consistent
+- [ ] Accessibility standards are maintained (contrast, keyboard navigation, etc.)
+
+### Common Issues to Flag
+- [ ] Too many font sizes (more than 4)
+- [ ] Inconsistent spacing values (not divisible by 8 or 4)
+- [ ] Overuse of accent colors (exceeding 10%)
+- [ ] Random or inconsistent margins/padding
+- [ ] Insufficient contrast between text and background
+- [ ] Unnecessary custom CSS when Tailwind utilities would suffice
 EOF
     
     # Make all command files writable
