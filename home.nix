@@ -266,20 +266,7 @@ EOF
     "WebFetch"
   ],
   "maxFileSize": 1000000,
-  "contextWindow": 200000,
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/workflow"
-          }
-        ]
-      }
-    ]
-  }
+  "contextWindow": 200000
 }
 EOF
     
