@@ -278,6 +278,81 @@ Provide:
 Focus on accuracy, comprehensiveness, and actionable insights.
 EOF
 
+cat > ~/.claude/commands/workflow.md << 'EOF'
+---
+allowed-tools: Task, TodoRead, TodoWrite, Read, Grep, Bash(git:*), Bash(npm:*)
+description: Orchestrate parallel Task agents for large workflows
+---
+
+# Parallel Workflow Orchestrator
+
+Execute large workflows using parallel Task tool sub-agents with intelligent batching and coordination.
+
+## Workflow: $ARGUMENTS
+
+## Execution Strategy
+
+### Phase 1: Task Analysis and Planning
+First, I'll analyze the requested workflow and break it down into:
+- **Independent tasks**: Can be executed in parallel without conflicts
+- **Sequential dependencies**: Must be executed in order
+- **Resource-intensive tasks**: Should be limited per batch
+
+### Phase 2: Batch Orchestration
+Execute tasks in optimized batches:
+- **Batch size**: Maximum 10 parallel agents per batch
+- **Collision prevention**: Each agent works on specific files/directories
+- **Progress tracking**: Monitor completion via TodoRead/TodoWrite
+
+### Phase 3: Task Agent Instructions
+Each Task agent will receive:
+1. **Specific scope**: Clear boundaries (files/directories to work on)
+2. **Isolation requirements**: Avoid modifying shared resources
+3. **Output format**: Structured results for aggregation
+4. **Error handling**: Report failures without blocking other agents
+
+### Phase 4: Synchronization Points
+Between batches:
+- **Verify completion**: Check all agents finished successfully
+- **Resolve conflicts**: Handle any file conflicts if they arise
+- **Update progress**: Mark todos as completed
+- **Plan next batch**: Based on dependencies and results
+
+## Example Workflow Breakdown
+
+For a request like "Refactor all components to use TypeScript":
+1. **Batch 1**: Analyze and list all components (1 agent)
+2. **Batch 2**: Convert simple components (10 agents, 1 per component)
+3. **Batch 3**: Convert complex components (5 agents for resource-intensive work)
+4. **Batch 4**: Update imports and tests (10 agents for different modules)
+5. **Batch 5**: Final verification and cleanup (1 agent)
+
+## Coordination Rules
+
+1. **File locking**: Agents declare which files they'll modify upfront
+2. **Directory isolation**: Prefer agents working in separate directories
+3. **Merge strategy**: Later batches handle integration of earlier work
+4. **Rollback capability**: Each batch creates a checkpoint
+
+## Progress Reporting
+
+Regular updates will include:
+- Current batch number and size
+- Completed vs pending tasks
+- Any failures or conflicts
+- Estimated remaining time
+
+## Failure Handling
+
+If any agent fails:
+1. Continue with other agents in the batch
+2. Collect all failure reports
+3. Attempt retry with adjusted strategy
+4. Report unrecoverable failures to user
+
+This orchestrator ensures efficient parallel execution while maintaining code quality and preventing conflicts between concurrent operations.
+EOF
+
 cat > ~/.claude/commands/frontend/component.md << 'EOF'
 ---
 allowed-tools: Read, Edit, Write, Bash(npm:*)
@@ -349,6 +424,7 @@ echo "  /user:optimize        - Code performance analysis"
 echo "  /user:deploy          - Smart deployment with checks"
 echo "  /user:debug           - Systematic debugging"
 echo "  /user:research        - Multi-source research using omnisearch"
+echo "  /user:workflow        - Orchestrate parallel Task agents for large workflows"
 echo "  /user:frontend:component - React/Vue component generator"
 echo "  /user:backend:api     - API endpoint generator"
 echo ""

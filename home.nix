@@ -86,7 +86,7 @@
       gd = "git diff";
       
       # Nix aliases
-      rebuild = "darwin-rebuild switch --flake .";
+      rebuild = "darwin-rebuild switch --flake \".#$(hostname | sed 's/\\..*//')\"";
       update = "nix flake update";
     };
     
@@ -102,6 +102,25 @@
       elif [ -f "$HOME/.env" ]; then
         export $(grep -v '^#' "$HOME/.env" | xargs)
       fi
+      
+      # Darwin-rebuild wrapper function
+      darwin-rebuild() {
+        local args=("$@")
+        local needs_hostname=false
+        
+        # Check if --flake . is used without hostname
+        for i in "''${!args[@]}"; do
+          if [[ "''${args[$i]}" == "--flake" ]] && [[ $((i+1)) -lt ''${#args[@]} ]]; then
+            if [[ "''${args[$((i+1))]}" == "." ]]; then
+              # Append hostname
+              args[$((i+1))]=".#$(hostname | sed 's/\..*//')"
+            fi
+          fi
+        done
+        
+        # Call the real darwin-rebuild
+        command darwin-rebuild "''${args[@]}"
+      }
       
       # Starship prompt
       eval "$(starship init zsh)"

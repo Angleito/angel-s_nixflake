@@ -72,7 +72,10 @@
         program = toString (pkgs.writeShellScript "deploy" ''
           set -euo pipefail
           echo "🔄 Deploying Darwin configuration..."
-          sudo ${darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild switch --flake .
+          # Get the current hostname without .local or .lan suffix
+          HOSTNAME=$(hostname | sed 's/\..*//')
+          echo "📍 Using hostname: $HOSTNAME"
+          sudo ${darwin.packages.${system}.darwin-rebuild}/bin/darwin-rebuild switch --flake ".#$HOSTNAME"
           echo "✅ Deployment complete!"
         '');
       };
@@ -93,13 +96,17 @@
               exit 1
           fi
           
+          # Get the current hostname without .local or .lan suffix
+          HOSTNAME=$(hostname | sed 's/\..*//')
+          echo "📍 Using hostname: $HOSTNAME"
+          
           # Check if nix-darwin is installed
           if ! command -v darwin-rebuild &> /dev/null; then
               echo "📦 Installing nix-darwin..."
-              nix run nix-darwin -- switch --flake .
+              nix run nix-darwin -- switch --flake ".#$HOSTNAME"
           else
               echo "🔄 Updating configuration..."
-              sudo darwin-rebuild switch --flake .
+              sudo darwin-rebuild switch --flake ".#$HOSTNAME"
           fi
           
           echo ""
@@ -109,37 +116,50 @@
       };
     };
     
-    # Darwin configuration
-    darwinConfigurations."angels-MacBook-Pro" = darwin.lib.darwinSystem {
-      inherit system;
-      
-      specialArgs = { inherit self; };
-      
-      modules = [
-        # Allow unfree packages
-        {
-          nixpkgs.config.allowUnfree = true;
-          nixpkgs.overlays = [ self.overlays.default ];
-        }
-        
-        # Import our modules
-        ./modules
-        
-        # Main configuration
-        ./darwin-configuration.nix
-        
-        # Home Manager integration
-        home-manager.darwinModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "backup";
-            users.angel = import ./home.nix;
-          };
-        }
-      ];
-    };
+    # Darwin configurations for common Mac hostnames
+    # The actual hostname will be determined at runtime
+    darwinConfigurations = 
+      let
+        # Function to create a darwin configuration for a given hostname
+        mkDarwinConfig = hostname: darwin.lib.darwinSystem {
+          inherit system;
+          
+          specialArgs = { inherit self; };
+          
+          modules = [
+            # Allow unfree packages
+            {
+              nixpkgs.config.allowUnfree = true;
+              nixpkgs.overlays = [ self.overlays.default ];
+            }
+            
+            # Import our modules
+            ./modules
+            
+            # Main configuration
+            ./darwin-configuration.nix
+            
+            # Home Manager integration
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "backup";
+                users.angel = import ./home.nix;
+              };
+            }
+          ];
+        };
+      in
+      {
+        # Add common Mac hostname patterns
+        "angels-MacBook-Pro" = mkDarwinConfig "angels-MacBook-Pro";
+        "angels-MBP" = mkDarwinConfig "angels-MBP";
+        "MacBook-Pro" = mkDarwinConfig "MacBook-Pro";
+        "MBP" = mkDarwinConfig "MBP";
+        # Add more patterns as needed
+      };
     
     # Development shells for direnv
     devShells.${system}.default = pkgs.mkShell {

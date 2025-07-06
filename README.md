@@ -201,6 +201,151 @@ Claude Code configuration is automatically created:
 - `~/.claude/commands/` - Directory containing all custom slash commands
 - `~/.claude/settings.json` - Advanced settings with security defaults
 
+## 📚 Development Best Practices
+
+### Core Principles
+
+1. **Reuse Before Create**
+   - Always check the repo for existing implementations first
+   - Reuse existing code/files & edit before creating new ones
+   - Use `grep`, `search_codebase`, or `file_glob` to find existing patterns
+
+2. **Deep Planning with Sequential Thinking**
+   - Leverage `!Task ultrathink` for complex planning tasks
+   - Break down problems into sequential steps before implementation
+   - Create dependency graphs to identify task relationships
+
+3. **Research-Driven Development**
+   - Use `mcp-omnisearch` for research sub-tasks
+   - Gather context from multiple sources before implementing
+   - Validate approaches with external documentation
+
+4. **Modular Code Design**
+   - Generate short, modular code snippets
+   - Separate concerns into distinct functions/modules
+   - Keep each component focused on a single responsibility
+
+5. **Smart Task Parallelization**
+   - Parallelize independent tasks with max 10 agents
+   - Preserve order for dependent tasks
+   - Use dependency graphs to determine execution order
+
+### Workflow Example: Feature Implementation
+
+```bash
+# Step 1: Sequential Planning Phase
+!Task ultrathink "Plan implementation of user authentication feature"
+# Output: Detailed plan with task breakdown and dependencies
+
+# Step 2: Create Dependency Graph
+Tasks:
+1. Research auth best practices (independent)
+2. Check existing auth code (independent)  
+3. Design auth schema (depends on 1,2)
+4. Implement auth middleware (depends on 3)
+5. Create login endpoint (depends on 4)
+6. Create register endpoint (depends on 4)
+7. Add auth tests (depends on 5,6)
+
+# Step 3: Execute Independent Tasks in Parallel
+# Batch 1 (parallel execution):
+- Agent 1: mcp-omnisearch "JWT authentication best practices Node.js 2024"
+- Agent 2: grep -r "auth" ./src && search_codebase "authentication middleware"
+
+# Step 4: Execute Dependent Tasks Sequentially
+# After batch 1 completes:
+- Design schema based on research findings
+- Implement middleware using existing patterns
+- Create endpoints (can parallelize login/register)
+- Write comprehensive tests
+```
+
+### Code Reuse Example
+
+```bash
+# BAD: Creating new file without checking
+❌ create_file auth/middleware.js
+
+# GOOD: Check first, then edit
+✅ grep -r "middleware" ./src
+✅ search_codebase "authentication middleware Express"
+✅ # Found existing middleware/base.js
+✅ edit_files middleware/base.js  # Extend existing code
+```
+
+### Modular Code Example
+
+```javascript
+// BAD: Monolithic function
+❌ function handleUserRegistration(req, res) {
+  // 100+ lines doing validation, hashing, DB ops, email, etc.
+}
+
+// GOOD: Modular approach
+✅ // Separate concerns into focused modules
+const validateUser = require('./validators/user');
+const hashPassword = require('./utils/crypto');
+const createUser = require('./db/users');
+const sendWelcomeEmail = require('./email/welcome');
+
+async function handleUserRegistration(req, res) {
+  const validation = validateUser(req.body);
+  if (!validation.valid) return res.status(400).json(validation.errors);
+  
+  const hashedPassword = await hashPassword(req.body.password);
+  const user = await createUser({ ...req.body, password: hashedPassword });
+  await sendWelcomeEmail(user);
+  
+  res.status(201).json({ id: user.id });
+}
+```
+
+### Parallel Execution Example
+
+```bash
+# Dependency Analysis
+Tasks for API refactoring:
+A. Analyze current API structure (independent)
+B. Research REST best practices (independent)
+C. Design new API schema (depends on A, B)
+D. Update user endpoints (depends on C)
+E. Update product endpoints (depends on C)
+F. Update order endpoints (depends on C)
+G. Update API documentation (depends on D, E, F)
+H. Write integration tests (depends on D, E, F)
+
+# Execution Plan
+Batch 1 (parallel): A, B
+Batch 2 (sequential): C
+Batch 3 (parallel): D, E, F
+Batch 4 (parallel): G, H
+
+# Command execution
+# Batch 1
+Agent 1: search_codebase "API routes endpoints"
+Agent 2: mcp-omnisearch "REST API design patterns 2024"
+
+# Batch 3 (after C completes)
+Agent 1: edit_files api/users.js
+Agent 2: edit_files api/products.js  
+Agent 3: edit_files api/orders.js
+```
+
+### Research-First Development
+
+```bash
+# Before implementing a complex feature
+!Task ultrathink "Plan WebSocket implementation for real-time chat"
+
+# Research phase (parallel):
+mcp-omnisearch "WebSocket vs Socket.io production comparison"
+mcp-omnisearch "WebSocket scaling strategies Redis"
+grep -r "websocket\|socket" ./src
+
+# Only after research, begin implementation
+# This prevents costly refactors and ensures best practices
+```
+
 ### Development Configuration
 
 For smoother development experience, the `claude` command includes several optimizations:
