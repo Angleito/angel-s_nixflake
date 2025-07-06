@@ -46,6 +46,12 @@ FIRECRAWL_API_KEY=your_key_here
 - macOS (Apple Silicon or Intel)
 - Internet connection
 
+### Important: Configuration Name
+This configuration uses a **fixed configuration name "angel"** for maximum portability across different Macs. This means:
+- You can run `darwin-rebuild switch --flake .` on any Mac
+- No need to worry about hostname matching
+- All commands will automatically use the "angel" configuration
+
 ### Installation
 
 1. **Clone this repository:**
@@ -73,8 +79,11 @@ FIRECRAWL_API_KEY=your_key_here
 # Using the flake app
 nix run .#install
 
-# Manual installation
-sudo darwin-rebuild switch --flake .
+# Manual installation with automatic "angel" configuration
+sudo darwin-rebuild switch --flake .#angel
+
+# Or just use the wrapper (works after first installation)
+darwin-rebuild switch --flake .
 ```
 
 ## 📦 What Gets Installed
@@ -438,8 +447,17 @@ development = {
 After making any configuration changes:
 
 ```bash
+# Option 1: Use the rebuild alias (simplest)
+rebuild
+
+# Option 2: Use darwin-rebuild directly (wrapper will add #angel automatically)
 sudo darwin-rebuild switch --flake .
+
+# Option 3: Explicitly specify the configuration
+sudo darwin-rebuild switch --flake .#angel
 ```
+
+**Note:** All commands use the fixed "angel" configuration for portability across different Macs.
 
 **Available flake commands:**
 ```bash
@@ -449,14 +467,15 @@ nix build .#packages.aarch64-darwin.sui-cli  # Build custom packages
 
 # Run apps
 nix run .#sui                      # Run Sui CLI
-nix run .#deploy                   # Deploy configuration
-nix run .#install                  # Install from scratch
+nix run .#deploy                   # Deploy configuration (uses "angel" automatically)
+nix run .#install                  # Install from scratch (uses "angel" automatically)
 ```
 
 ## 🛠️ Useful Commands
 
 ### System Management
-- `sudo darwin-rebuild switch --flake .` - Apply configuration changes
+- `rebuild` - Apply configuration changes (alias for darwin-rebuild)
+- `sudo darwin-rebuild switch --flake .` - Apply configuration (auto-uses "angel")
 - `nix flake update` - Update all flake inputs to latest versions
 - `nix flake check` - Validate configuration
 - `./install.sh` - Complete setup from scratch

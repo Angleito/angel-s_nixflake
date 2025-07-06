@@ -86,7 +86,7 @@
       gd = "git diff";
       
       # Nix aliases
-      rebuild = "darwin-rebuild switch --flake \".#$(hostname | sed 's/\\..*//')\"";
+      rebuild = "darwin-rebuild switch --flake .#angel";
       update = "nix flake update";
     };
     
@@ -106,14 +106,13 @@
       # Darwin-rebuild wrapper function
       darwin-rebuild() {
         local args=("$@")
-        local needs_hostname=false
         
         # Check if --flake . is used without hostname
         for i in "''${!args[@]}"; do
           if [[ "''${args[$i]}" == "--flake" ]] && [[ $((i+1)) -lt ''${#args[@]} ]]; then
             if [[ "''${args[$((i+1))]}" == "." ]]; then
-              # Append hostname
-              args[$((i+1))]=".#$(hostname | sed 's/\..*//')"
+              # Always use "angel" configuration
+              args[$((i+1))]=".#angel"
             fi
           fi
         done
