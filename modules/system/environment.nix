@@ -172,7 +172,8 @@ in {
     };
     
     # Add shell integration for automatic environment loading
-    programs.zsh.shellInit = ''
+    programs.zsh.enable = true;
+    programs.zsh.interactiveShellInit = ''
       # Load environment variables from .env file
       if [[ -f "$HOME/.config/nix-project/.env" ]]; then
         set -a
@@ -181,7 +182,8 @@ in {
       fi
     '';
     
-    programs.bash.shellInit = ''
+    programs.bash.enable = true;
+    programs.bash.interactiveShellInit = ''
       # Load environment variables from .env file
       if [[ -f "$HOME/.config/nix-project/.env" ]]; then
         set -a
