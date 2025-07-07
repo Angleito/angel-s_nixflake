@@ -1,0 +1,14 @@
+Backup Files Audit
+==================
+Date: 2025-01-07
+Purpose: List existing backup files that may clash with Home Manager
+
+Files Found:
+------------
+/Users/angel/.claude.json.backup
+
+Notes:
+------
+- Only one backup file was found in the home directory
+- This file might need to be renamed or removed before Home Manager can proceed
+- No .zshrc.backup or .zprofile.backup files were found
