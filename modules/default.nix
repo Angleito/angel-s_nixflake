@@ -11,6 +11,7 @@
     ./system/power.nix
     ./system/defaults.nix
     ./system/xcode.nix
+    ./system/environment.nix
     
     # Application modules
     ./applications/homebrew.nix

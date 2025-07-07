@@ -22,6 +22,7 @@
   home.packages = with pkgs; [
     # Development tools
     nodejs_20
+    nodePackages.pnpm
     python3
     go
     rustup
@@ -101,6 +102,11 @@
         export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
       elif [ -f "$HOME/.env" ]; then
         export $(grep -v '^#' "$HOME/.env" | xargs)
+      fi
+      
+      # Load global .env file if it exists
+      if [ -f "$HOME/.env" ]; then
+        source "$HOME/.env"
       fi
       
       # Darwin-rebuild wrapper function
@@ -857,5 +863,72 @@ EOF
     
     # Make the hook executable
     chmod +x "$HOME/.config/git/hooks/commit-msg"
+  '';
+
+  # Cursor MCP Configuration
+  # Create the Cursor MCP configuration file with environment variable support
+  home.activation.cursorMcpConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
+    CURSOR_MCP_PATH="$HOME/.cursor/mcp.json"
+    
+    # Create .cursor directory if it doesn't exist
+    mkdir -p "$HOME/.cursor"
+    
+    # Source the .env file - check multiple locations
+    if [ -f "./.env" ]; then
+      export $(grep -v '^#' "./.env" | xargs)
+    elif [ -f "$HOME/Projects/nix-project/.env" ]; then
+      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)  
+    elif [ -f "$HOME/.env" ]; then
+      export $(grep -v '^#' "$HOME/.env" | xargs)
+    fi
+    
+    # Create the Cursor MCP config content with environment variables
+    cat > "$CURSOR_MCP_PATH" << EOF
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/${config.home.username}",
+        "/Users/${config.home.username}/Projects",
+        "/Users/${config.home.username}/Documents"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@microsoft/mcp-server-playwright"]
+    },
+    "mcp-omnisearch": {
+      "command": "npx",
+      "args": ["-y", "mcp-omnisearch"],
+      "env": {
+        "TAVILY_API_KEY": "$TAVILY_API_KEY",
+        "BRAVE_API_KEY": "$BRAVE_API_KEY",
+        "KAGI_API_KEY": "$KAGI_API_KEY",
+        "PERPLEXITY_API_KEY": "$PERPLEXITY_API_KEY",
+        "JINA_AI_API_KEY": "$JINA_AI_API_KEY",
+        "FIRECRAWL_API_KEY": "$FIRECRAWL_API_KEY"
+      }
+    }
+  }
+}
+EOF
+    
+    # Make the file writable
+    chmod 644 "$CURSOR_MCP_PATH"
   '';
 }

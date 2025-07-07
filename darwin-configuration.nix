@@ -46,6 +46,14 @@
       preventDiskSleep = true;
     };
     xcode.autoInstall = true;
+    environment = {
+      enableEnvManagement = true;
+      defaultVariables = {
+        EDITOR = "vim";
+        PAGER = "less";
+        BROWSER = "open";
+      };
+    };
   };
 
   applications.homebrew.enable = true;

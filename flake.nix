@@ -66,6 +66,62 @@
         program = "${pkgs.vercel-cli}/bin/vercel";
       };
       
+      # Environment management apps
+      setup-env = {
+        type = "app";
+        program = toString (pkgs.writeShellScript "setup-env" ''
+          set -euo pipefail
+          
+          ENV_FILE="$HOME/.config/nix-project/.env"
+          ENV_SAMPLE="${./.env.sample}"
+          
+          echo "🔧 Setting up environment configuration..."
+          
+          # Create config directory if it doesn't exist
+          mkdir -p "$(dirname "$ENV_FILE")"
+          
+          # Copy .env.sample to config directory
+          cp "$ENV_SAMPLE" "$HOME/.config/nix-project/.env.sample"
+          
+          # Copy .env.sample to .env if .env doesn't exist
+          if [[ ! -f "$ENV_FILE" ]]; then
+            cp "$ENV_SAMPLE" "$ENV_FILE"
+            echo "✅ Created $ENV_FILE from sample"
+            echo "📝 Please edit $ENV_FILE with your actual values"
+          else
+            echo "ℹ️  $ENV_FILE already exists"
+          fi
+          
+          # Make sure the file is readable only by the user
+          chmod 600 "$ENV_FILE"
+          
+          echo "🔒 Set secure permissions on $ENV_FILE"
+          echo "🎉 Environment setup complete!"
+          echo ""
+          echo "To edit your environment variables, run:"
+          echo "  $EDITOR $ENV_FILE"
+        '');
+      };
+      
+      deploy-env = {
+        type = "app";
+        program = toString (pkgs.writeShellScript "deploy-env" ''
+          set -euo pipefail
+          
+          echo "🚀 Deploying environment configuration across systems..."
+          
+          # Run environment setup
+          ${self.apps.${system}.setup-env.program}
+          
+          echo "📦 Configuration deployment complete!"
+          echo ""
+          echo "Next steps:"
+          echo "  1. Edit $HOME/.config/nix-project/.env with your actual values"
+          echo "  2. Run 'direnv allow' in your project directories"
+          echo "  3. Your environment variables will be automatically loaded"
+        '');
+      };
+      
       # Deployment helper
       deploy = {
         type = "app";
