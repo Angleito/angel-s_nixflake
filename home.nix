@@ -227,9 +227,11 @@ in
         hasCompletedOnboarding = true;
         mcpServers = {
           filesystem = {
-            command = "npx";
+            command = "${pkgs.nodejs_20}/bin/node";
             args = [
-              "-y"
+              "${pkgs.nodejs_20}/bin/npm"
+              "exec"
+              "--"
               "@modelcontextprotocol/server-filesystem"
               "/Users/${config.home.username}"
               "/Users/${config.home.username}/Projects"
@@ -237,16 +239,31 @@ in
             ];
           };
           memory = {
-            command = "npx";
-            args = [ "-y" "@modelcontextprotocol/server-memory" ];
+            command = "${pkgs.nodejs_20}/bin/node";
+            args = [
+              "${pkgs.nodejs_20}/bin/npm"
+              "exec"
+              "--"
+              "@modelcontextprotocol/server-memory"
+            ];
           };
           puppeteer = {
-            command = "npx";
-            args = [ "-y" "@modelcontextprotocol/server-puppeteer" ];
+            command = "${pkgs.nodejs_20}/bin/node";
+            args = [
+              "${pkgs.nodejs_20}/bin/npm"
+              "exec"
+              "--"
+              "@modelcontextprotocol/server-puppeteer"
+            ];
           };
           playwright = {
-            command = "npx";
-            args = [ "-y" "@microsoft/mcp-server-playwright" ];
+            command = "${pkgs.nodejs_20}/bin/node";
+            args = [
+              "${pkgs.nodejs_20}/bin/npm"
+              "exec"
+              "--"
+              "@microsoft/mcp-server-playwright"
+            ];
           };
         };
         projects = {};
@@ -267,8 +284,13 @@ in
         baseConfig // {
           mcpServers = baseConfig.mcpServers // {
             mcp-omnisearch = {
-              command = "npx";
-              args = [ "-y" "mcp-omnisearch" ];
+              command = "${pkgs.nodejs_20}/bin/node";
+              args = [
+                "${pkgs.nodejs_20}/bin/npm"
+                "exec"
+                "--"
+                "mcp-omnisearch"
+              ];
               env = omnisearchEnv;
             };
           };
@@ -922,22 +944,40 @@ EOF
     mkdir -p "$HOME/.cursor"
     
     # Source the .env file - check multiple locations
-    if [ -f "./.env" ]; then
-      export $(grep -v '^#' "./.env" | xargs)
-    elif [ -f "$HOME/Projects/nix-project/.env" ]; then
-      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)  
-    elif [ -f "$HOME/.env" ]; then
-      export $(grep -v '^#' "$HOME/.env" | xargs)
-    fi
+    ENV_FILES=(
+        "/Users/angel/Projects/nix-project/.env"
+        "$HOME/.config/nix-project/.env"
+        "$HOME/.env"
+        "./.env"
+    )
+    
+    for env_file in "''${ENV_FILES[@]}"; do
+        if [[ -f "$env_file" ]]; then
+            set -a
+            source "$env_file"
+            set +a
+            break
+        fi
+    done
+    
+    # Get environment variables with defaults
+    TAVILY_API_KEY="''${TAVILY_API_KEY:-}"
+    BRAVE_API_KEY="''${BRAVE_API_KEY:-}"
+    KAGI_API_KEY="''${KAGI_API_KEY:-}"
+    PERPLEXITY_API_KEY="''${PERPLEXITY_API_KEY:-}"
+    JINA_AI_API_KEY="''${JINA_AI_API_KEY:-}"
+    FIRECRAWL_API_KEY="''${FIRECRAWL_API_KEY:-}"
     
     # Create the Cursor MCP config content with environment variables
     cat > "$CURSOR_MCP_PATH" << EOF
 {
   "mcpServers": {
     "filesystem": {
-      "command": "npx",
+      "command": "${pkgs.nodejs_20}/bin/node",
       "args": [
-        "-y",
+        "${pkgs.nodejs_20}/bin/npm",
+        "exec",
+        "--",
         "@modelcontextprotocol/server-filesystem",
         "/Users/${config.home.username}",
         "/Users/${config.home.username}/Projects",
@@ -945,24 +985,49 @@ EOF
       ]
     },
     "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
+      "command": "${pkgs.nodejs_20}/bin/node",
+      "args": [
+        "${pkgs.nodejs_20}/bin/npm",
+        "exec",
+        "--",
+        "@modelcontextprotocol/server-memory"
+      ]
     },
     "sequential-thinking": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+      "command": "${pkgs.nodejs_20}/bin/node",
+      "args": [
+        "${pkgs.nodejs_20}/bin/npm",
+        "exec",
+        "--",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
     },
     "puppeteer": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+      "command": "${pkgs.nodejs_20}/bin/node",
+      "args": [
+        "${pkgs.nodejs_20}/bin/npm",
+        "exec",
+        "--",
+        "@modelcontextprotocol/server-puppeteer"
+      ]
     },
     "playwright": {
-      "command": "npx",
-      "args": ["-y", "@microsoft/mcp-server-playwright"]
+      "command": "${pkgs.nodejs_20}/bin/node",
+      "args": [
+        "${pkgs.nodejs_20}/bin/npm",
+        "exec",
+        "--",
+        "@microsoft/mcp-server-playwright"
+      ]
     },
     "mcp-omnisearch": {
-      "command": "npx",
-      "args": ["-y", "mcp-omnisearch"],
+      "command": "${pkgs.nodejs_20}/bin/node",
+      "args": [
+        "${pkgs.nodejs_20}/bin/npm",
+        "exec",
+        "--",
+        "mcp-omnisearch"
+      ],
       "env": {
         "TAVILY_API_KEY": "$TAVILY_API_KEY",
         "BRAVE_API_KEY": "$BRAVE_API_KEY",

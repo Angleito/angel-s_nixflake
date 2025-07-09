@@ -52,6 +52,14 @@
         ${pkgs.bun}/bin/bun install -g http-server@latest
         ${pkgs.bun}/bin/bun install -g live-server@latest
         
+        # Install MCP servers globally
+        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-filesystem@latest
+        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-memory@latest
+        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-puppeteer@latest
+        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-sequential-thinking@latest
+        ${pkgs.nodejs_20}/bin/npm install -g @microsoft/mcp-server-playwright@latest
+        ${pkgs.nodejs_20}/bin/npm install -g mcp-omnisearch@latest
+        
         # Create symlinks in ~/.local/bin for easy access
         mkdir -p $USER_HOME/.local/bin
         ln -sf $USER_HOME/.npm-global/bin/vite $USER_HOME/.local/bin/vite 2>/dev/null || true
