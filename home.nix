@@ -1,4 +1,29 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
+
+let
+  # Simple JSON utilities for Claude configuration
+  escapeJsonString = str:
+    let
+      escapeMap = {
+        "\\" = "\\\\";
+        "\"" = "\\\"";
+        "\n" = "\\n";
+        "\r" = "\\r";
+        "\t" = "\\t";
+      };
+      escapeChar = char: escapeMap.${char} or char;
+      chars = lib.stringToCharacters str;
+    in lib.concatStrings (map escapeChar chars);
+  
+  # Get environment variable with default
+  getEnvWithDefault = varName: default:
+    let value = builtins.getEnv varName;
+    in if value == "" then default else value;
+  
+  # Build JSON object filtering out null values
+  buildJsonObject = attrs:
+    lib.filterAttrs (n: v: v != null) attrs;
+in
 
 {
   # Import git configuration
@@ -63,6 +88,10 @@
     # Archive tools
     unzip
     p7zip
+    
+    # Web3 tools
+    sui-cli
+    walrus-cli
   ];
 
   # Zsh configuration
@@ -87,7 +116,8 @@
       gd = "git diff";
       
       # Nix aliases
-      rebuild = "darwin-rebuild switch --flake .#angel";
+      rebuild = "cd /Users/angel/Projects/nix-project && ./rebuild.sh";
+      rebuild-quick = "darwin-rebuild switch --flake .#angel";
       update = "nix flake update";
     };
     
@@ -114,9 +144,9 @@
         local args=("$@")
         
         # Check if --flake . is used without hostname
-        for i in "''${!args[@]}"; do
-          if [[ "''${args[$i]}" == "--flake" ]] && [[ $((i+1)) -lt ''${#args[@]} ]]; then
-            if [[ "''${args[$((i+1))]}" == "." ]]; then
+        for ((i=1; i<=$#args; i++)); do
+          if [[ "$args[$i]" == "--flake" ]] && [[ $((i+1)) -le $#args ]]; then
+            if [[ "$args[$((i+1))]" == "." ]]; then
               # Always use "angel" configuration
               args[$((i+1))]=".#angel"
             fi
@@ -124,7 +154,7 @@
         done
         
         # Call the real darwin-rebuild
-        command darwin-rebuild "''${args[@]}"
+        command darwin-rebuild "$args[@]"
       }
       
       # Starship prompt
@@ -156,91 +186,108 @@
     "$HOME/.local/bin"
   ];
 
-  # Create claude wrapper script with permissions bypass
-  home.file.".local/bin/claude".text = ''#!/bin/bash
-    # Source .env file - check multiple locations
-    if [ -f "./.env" ]; then
-      export $(grep -v '^#' "./.env" | xargs)
-    elif [ -f "$HOME/Projects/nix-project/.env" ]; then
-      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
-    elif [ -f "$HOME/.env" ]; then
-      export $(grep -v '^#' "$HOME/.env" | xargs)
-    fi
-    
-    # Force shell to recognize the new command
-    hash -r
-    
-    exec ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
-  '';
+  # Create Claude wrapper script with permissions bypass
+  home.file.".local/bin/claude" = {
+    text = ''
+      #!/bin/bash
+      # Source .env file - check multiple locations
+      if [ -f "./.env" ]; then
+        export $(grep -v '^#' "./.env" | xargs)
+      elif [ -f "$HOME/Projects/nix-project/.env" ]; then
+        export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+      elif [ -f "$HOME/.env" ]; then
+        export $(grep -v '^#' "$HOME/.env" | xargs)
+      fi
+      
+      # Force shell to recognize the new command
+      hash -r
+      
+      exec ${pkgs.claude-code}/bin/claude --dangerously-skip-permissions "$@"
+    '';
+    executable = true;
+  };
   
-  # Make the claude wrapper executable
-  home.file.".local/bin/claude".executable = true;
-
-  # Claude Code Configuration
-  # Create the main Claude configuration file with environment variable support
-  # Using home.activation to create a writable file instead of read-only home.file
-  home.activation.claudeConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
-    CLAUDE_CONFIG_PATH="$HOME/.claude.json"
-    
-    # Source the .env file - check multiple locations
-    if [ -f "./.env" ]; then
-      export $(grep -v '^#' "./.env" | xargs)
-    elif [ -f "$HOME/Projects/nix-project/.env" ]; then
-      export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)  
-    elif [ -f "$HOME/.env" ]; then
-      export $(grep -v '^#' "$HOME/.env" | xargs)
-    fi
-    
-    # Create the config content with environment variables
-    cat > "$CLAUDE_CONFIG_PATH" << EOF
-{
-  "numStartups": 0,
-  "autoUpdaterStatus": "enabled",
-  "theme": "dark",
-  "hasCompletedOnboarding": true,
-  "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/${config.home.username}",
-        "/Users/${config.home.username}/Projects",
-        "/Users/${config.home.username}/Documents"
-      ]
-    },
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
-    },
-    "puppeteer": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
-    },
-    "playwright": {
-      "command": "npx",
-      "args": ["-y", "@microsoft/mcp-server-playwright"]
-    },
-    "mcp-omnisearch": {
-      "command": "npx",
-      "args": ["-y", "mcp-omnisearch"],
-      "env": {
-        "TAVILY_API_KEY": "$TAVILY_API_KEY",
-        "BRAVE_API_KEY": "$BRAVE_API_KEY",
-        "KAGI_API_KEY": "$KAGI_API_KEY",
-        "PERPLEXITY_API_KEY": "$PERPLEXITY_API_KEY",
-        "JINA_AI_API_KEY": "$JINA_AI_API_KEY",
-        "FIRECRAWL_API_KEY": "$FIRECRAWL_API_KEY"
-      }
-    }
-  },
-  "projects": {}
-}
+  # Main Claude configuration using Nix builtins.toJSON
+  home.activation.claudeConfig = 
+    let
+      # Get environment variables with fallback values
+      tavilyApiKey = getEnvWithDefault "TAVILY_API_KEY" "";
+      braveApiKey = getEnvWithDefault "BRAVE_API_KEY" "";
+      kagiApiKey = getEnvWithDefault "KAGI_API_KEY" "";
+      perplexityApiKey = getEnvWithDefault "PERPLEXITY_API_KEY" "";
+      jinaAiApiKey = getEnvWithDefault "JINA_AI_API_KEY" "";
+      firecrawlApiKey = getEnvWithDefault "FIRECRAWL_API_KEY" "";
+      
+      # Base configuration object
+      baseConfig = {
+        numStartups = 0;
+        autoUpdaterStatus = "enabled";
+        theme = "dark";
+        hasCompletedOnboarding = true;
+        mcpServers = {
+          filesystem = {
+            command = "npx";
+            args = [
+              "-y"
+              "@modelcontextprotocol/server-filesystem"
+              "/Users/${config.home.username}"
+              "/Users/${config.home.username}/Projects"
+              "/Users/${config.home.username}/Documents"
+            ];
+          };
+          memory = {
+            command = "npx";
+            args = [ "-y" "@modelcontextprotocol/server-memory" ];
+          };
+          puppeteer = {
+            command = "npx";
+            args = [ "-y" "@modelcontextprotocol/server-puppeteer" ];
+          };
+          playwright = {
+            command = "npx";
+            args = [ "-y" "@microsoft/mcp-server-playwright" ];
+          };
+        };
+        projects = {};
+      };
+      
+      # Build omnisearch environment variables (only include non-empty keys)
+      omnisearchEnv = buildJsonObject {
+        TAVILY_API_KEY = if tavilyApiKey != "" then tavilyApiKey else null;
+        BRAVE_API_KEY = if braveApiKey != "" then braveApiKey else null;
+        KAGI_API_KEY = if kagiApiKey != "" then kagiApiKey else null;
+        PERPLEXITY_API_KEY = if perplexityApiKey != "" then perplexityApiKey else null;
+        JINA_AI_API_KEY = if jinaAiApiKey != "" then jinaAiApiKey else null;
+        FIRECRAWL_API_KEY = if firecrawlApiKey != "" then firecrawlApiKey else null;
+      };
+      
+      # Add omnisearch server if any API keys are available
+      finalConfig = if omnisearchEnv != {} then 
+        baseConfig // {
+          mcpServers = baseConfig.mcpServers // {
+            mcp-omnisearch = {
+              command = "npx";
+              args = [ "-y" "mcp-omnisearch" ];
+              env = omnisearchEnv;
+            };
+          };
+        }
+      else baseConfig;
+      
+      # Convert to JSON string
+      configJson = builtins.toJSON finalConfig;
+    in
+    config.lib.dag.entryAfter ["writeBoundary"] ''
+      CLAUDE_CONFIG_PATH="$HOME/.claude.json"
+      
+      # Write the JSON configuration
+      cat > "$CLAUDE_CONFIG_PATH" << 'EOF'
+${configJson}
 EOF
-    
-    # Make the file writable
-    chmod 644 "$CLAUDE_CONFIG_PATH"
-  '';
+      
+      # Make the file writable
+      chmod 644 "$CLAUDE_CONFIG_PATH"
+    '';
 
   # Claude configuration - using home.activation to create writable files
   home.activation.claudeSetup = config.lib.dag.entryAfter ["writeBoundary"] ''
@@ -863,6 +910,39 @@ EOF
     
     # Make the hook executable
     chmod +x "$HOME/.config/git/hooks/commit-msg"
+  '';
+  
+  # Git configuration from .env file
+  home.activation.gitConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
+    echo "Setting up git configuration from .env file..."
+    
+    # Source .env file if it exists
+    ENV_FILES=(
+        "/Users/angel/Projects/nix-project/.env"
+        "$HOME/.config/nix-project/.env"
+        "$HOME/.env"
+    )
+    
+    for env_file in "''${ENV_FILES[@]}"; do
+        if [[ -f "$env_file" ]]; then
+            echo "Loading environment from: $env_file"
+            set -a
+            source "$env_file"
+            set +a
+            break
+        fi
+    done
+    
+    # Set git config if variables are available
+    if [[ -n "''${GIT_NAME:-}" ]]; then
+        echo "Setting git user.name to: $GIT_NAME"
+        git config --global user.name "$GIT_NAME"
+    fi
+    
+    if [[ -n "''${GIT_EMAIL:-}" ]]; then
+        echo "Setting git user.email to: $GIT_EMAIL"
+        git config --global user.email "$GIT_EMAIL"
+    fi
   '';
 
   # Cursor MCP Configuration

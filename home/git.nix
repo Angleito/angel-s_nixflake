@@ -1,7 +1,13 @@
-{ pkgs, ... }:
+{ pkgs, lib, config, ... }:
 let
-  gitName  = builtins.getEnv "GIT_NAME";
-  gitEmail = builtins.getEnv "GIT_EMAIL";
+  # Get environment variable with default
+  getEnvWithDefault = varName: default:
+    let value = builtins.getEnv varName;
+    in if value == "" then default else value;
+  
+  # Get git configuration from environment variables
+  gitName  = getEnvWithDefault "GIT_NAME" "Angleito";
+  gitEmail = getEnvWithDefault "GIT_EMAIL" "arainey555@gmail.com";
 in
 {
   programs.git = {

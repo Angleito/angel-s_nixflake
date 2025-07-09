@@ -13,6 +13,9 @@
     ./system/xcode.nix
     ./system/environment.nix
     
+    # Program modules
+    ./programs/git-env.nix
+    
     # Application modules
     ./applications/homebrew.nix
   ];

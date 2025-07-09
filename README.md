@@ -1,33 +1,388 @@
 # Angel's Pure Nix Darwin Configuration
 
-A complete macOS system configuration using **pure Nix architecture** with modular design. This setup eliminates shell script complexity and provides declarative package management for your entire development environment with a single command.
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Angleito/angelsnixconfig)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Nix](https://img.shields.io/badge/built%20with-Nix-5277C3.svg)](https://nixos.org/)
+[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux-lightgrey.svg)](#supported-platforms)
 
-## Privacy Safeguards
+A complete **multi-platform** system configuration using **pure Nix architecture** with modular design. This setup eliminates shell script complexity and provides declarative package management for your entire development environment with a single command.
 
-This configuration implements several privacy safeguards to protect your personal information:
+## 🚀 Quick Installation
 
-### 1. Environment Variables are Git-Ignored
-- The `.env` file containing personal identity information is explicitly ignored by Git (see `.gitignore`)
-- This ensures your personal details (name, email, GitHub username) are never committed to version control
-- Each user must create their own `.env` file based on `.env.sample`
+### Prerequisites
 
-### 2. Identity Information is Build-Time Only
-- Personal identity values are only used during the Nix build process
-- They are injected as build arguments and not stored in the final system configuration
-- The built system does not expose these values at runtime
+| Operating System | Requirements |
+|------------------|-------------|
+| **macOS** (Apple Silicon) | Nix package manager |
+| **macOS** (Intel) | Nix package manager |
+| **Linux** (x86_64) | Nix package manager |
+| **Linux** (ARM64) | Nix package manager |
 
-### 3. CI/CD Uses Placeholder Values
-- Continuous Integration and Deployment pipelines run with generic placeholder values
-- This allows automated testing without exposing real user information
-- The `.env.sample` file provides the template with safe default values
+#### Install Nix (Required)
 
-### 4. API Keys for MCP Omnisearch
-For Claude Code's MCP omnisearch functionality, create a `.env` file in one of these locations:
-- `./.env` (current directory when running claude)
+**All Platforms:**
+```bash
+# Recommended: Determinate Systems Nix Installer
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+```
+
+**Alternative (Official Nix Installer):**
+```bash
+curl -L https://nixos.org/nix/install | sh -s -- --daemon
+```
+
+### Installation Commands
+
+#### macOS (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/Angleito/angelsnixconfig.git
+cd angelsnixconfig
+
+# Quick install (installs Homebrew + nix-darwin automatically)
+./install.sh
+```
+
+#### Linux / WSL
+
+```bash
+# Clone the repository
+git clone https://github.com/Angleito/angelsnixconfig.git
+cd angelsnixconfig
+
+# Enter development shell
+nix develop
+
+# Install packages
+nix profile install .#web3-tools
+```
+
+#### Alternative Installation Methods
+
+```bash
+# Using flake app (all platforms)
+nix run .#install
+
+# Manual Darwin installation
+sudo darwin-rebuild switch --flake .#angel
+
+# Build for specific platform
+nix build .#packages.x86_64-linux.web3-tools
+```
+
+## 🔧 Platform-Specific Setup
+
+### macOS Additional Setup
+
+**Homebrew Installation (Automatic):**
+The `install.sh` script automatically installs Homebrew for GUI applications.
+
+**Manual Homebrew Installation:**
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### Linux Additional Setup
+
+**For Ubuntu/Debian:**
+```bash
+# Install build dependencies
+sudo apt update
+sudo apt install build-essential pkg-config libssl-dev
+```
+
+**For Arch Linux:**
+```bash
+# Install build dependencies
+sudo pacman -S base-devel openssl pkg-config
+```
+
+## 🎯 Usage Examples
+
+### Basic Usage
+
+```bash
+# Apply configuration changes
+rebuild
+
+# Start development environment
+nix develop
+
+# Use custom CLI tools
+sui --help
+walrus --help
+vercel --help
+
+# Start Claude Code with AI assistance
+claude
+```
+
+### Development Workflow
+
+```bash
+# Check current configuration
+nix flake check
+
+# Update all dependencies
+nix flake update
+
+# Test build without installation
+nix build .#packages.aarch64-darwin.web3-tools
+
+# Enter development shell with all tools
+nix develop
+```
+
+### Claude Code AI Commands
+
+```bash
+# In Claude Code CLI
+/user:security-review    # Comprehensive security audit
+/user:optimize          # Performance optimization
+/user:deploy            # Smart deployment
+/user:debug             # Systematic debugging
+/user:research "topic"  # Multi-source research
+```
+
+## 📋 Supported Platforms
+
+| Platform | Architecture | Status | Notes |
+|----------|-------------|--------|---------|
+| **macOS** | Apple Silicon (M1/M2/M3) | ✅ Full Support | Primary development platform |
+| **macOS** | Intel x86_64 | ✅ Full Support | Complete Darwin integration |
+| **Linux** | x86_64 | ✅ Full Support | Ubuntu, Arch, NixOS tested |
+| **Linux** | ARM64/aarch64 | ✅ Full Support | Raspberry Pi, ARM servers |
+| **WSL** | x86_64 | ✅ Full Support | Windows Subsystem for Linux |
+| **Windows** | Native | ❌ Not Supported | Use WSL instead |
+
+### Platform-Specific Features
+
+| Feature | macOS | Linux | WSL |
+|---------|-------|-------|-----|
+| GUI Applications | ✅ Homebrew | ❌ CLI Only | ❌ CLI Only |
+| nix-darwin | ✅ Yes | ❌ No | ❌ No |
+| System Configuration | ✅ Full | ⚠️ Limited | ⚠️ Limited |
+| Docker Integration | ✅ OrbStack | ✅ Native | ✅ Native |
+| Development Tools | ✅ Complete | ✅ Complete | ✅ Complete |
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+#### 1. "Nix command not found"
+
+**Solution:**
+```bash
+# Reinstall Nix
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# Reload shell
+source ~/.zshrc
+# or
+source ~/.bashrc
+```
+
+#### 2. "Permission denied" on install.sh
+
+**Solution:**
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+#### 3. Build failures
+
+**Diagnosis:**
+```bash
+# Check flake configuration
+nix flake check
+
+# Test specific package
+nix build .#packages.aarch64-darwin.sui-cli
+
+# Verbose build for debugging
+nix build .#packages.aarch64-darwin.sui-cli --verbose
+```
+
+**Common fixes:**
+```bash
+# Clear Nix cache
+nix-collect-garbage -d
+
+# Update flake inputs
+nix flake update
+
+# Force rebuild
+nix build .#packages.aarch64-darwin.sui-cli --rebuild
+```
+
+#### 4. Custom packages not working
+
+**Solution:**
+```bash
+# Ensure flake is committed to git
+git add .
+git commit -m "update config"
+
+# Check package definitions
+ls -la pkgs/
+
+# Verify overlay import
+grep -r "overlay" flake.nix
+```
+
+#### 5. Apps not appearing after install (macOS)
+
+**Solution:**
+```bash
+# Restart terminal
+source ~/.zshrc
+
+# Check Applications folder
+ls /Applications/
+
+# Retry installation
+sudo darwin-rebuild switch --flake .
+
+# Check Homebrew status
+brew list
+```
+
+#### 6. Environment variables not loaded
+
+**Solution:**
+```bash
+# Check .env file exists
+ls -la .env
+
+# Check direnv configuration
+cat .envrc
+
+# Allow direnv
+direnv allow
+
+# Reload environment
+rebuild
+```
+
+### Platform-Specific Issues
+
+#### macOS
+
+**Issue:** "xcode-select: error: tool 'xcodebuild' requires Xcode"
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
+```
+
+**Issue:** Homebrew casks fail to install
+```bash
+# Update Homebrew
+brew update
+
+# Check cask availability
+brew search --cask warp
+```
+
+#### Linux
+
+**Issue:** "error: cannot build on 'x86_64-linux'"
+```bash
+# Install build dependencies
+sudo apt install build-essential  # Ubuntu/Debian
+sudo pacman -S base-devel         # Arch Linux
+```
+
+**Issue:** SSL certificate errors
+```bash
+# Update certificates
+sudo apt update && sudo apt install ca-certificates  # Ubuntu/Debian
+sudo pacman -S ca-certificates                       # Arch Linux
+```
+
+### Getting Help
+
+1. **Check logs:**
+   ```bash
+   # Nix build logs
+   nix log .#packages.aarch64-darwin.sui-cli
+   
+   # System logs (macOS)
+   log show --predicate 'process == "darwin-rebuild"' --last 1h
+   ```
+
+2. **Community support:**
+   - [Nix Community Discord](https://discord.gg/RbvHtGa)
+   - [NixOS Discourse](https://discourse.nixos.org/)
+   - [GitHub Issues](https://github.com/Angleito/angelsnixconfig/issues)
+
+3. **Documentation:**
+   - [Nix Manual](https://nixos.org/manual/nix/stable/)
+   - [nix-darwin Documentation](https://github.com/LnL7/nix-darwin)
+   - [Home Manager Manual](https://nix-community.github.io/home-manager/)
+
+## 📦 Version Information
+
+### Core Components
+
+| Component | Version | Status |
+|-----------|---------|--------|
+| **Nix Darwin Config** | 1.0.0 | ✅ Stable |
+| **Nix Package Manager** | 2.18+ | ✅ Required |
+| **nix-darwin** | Latest | ✅ Auto-installed |
+| **Home Manager** | Latest | ✅ Auto-installed |
+| **nixpkgs** | unstable | ✅ Auto-updated |
+
+### Custom Packages
+
+| Package | Version | Platforms | Status |
+|---------|---------|-----------|--------|
+| **Sui CLI** | 1.51.4 | All | ✅ Stable |
+| **Walrus CLI** | 1.28.1 | All | ✅ Stable |
+| **Vercel CLI** | Latest | All | ✅ NPM Wrapper |
+| **Claude Code** | Latest | All | ✅ AI Assistant |
+
+### GUI Applications (macOS)
+
+| Application | Installation Method | Status |
+|-------------|-------------------|--------|
+| **Warp** | Homebrew | ✅ Auto-installed |
+| **Cursor** | Homebrew | ✅ Auto-installed |
+| **Brave Browser** | Homebrew | ✅ Auto-installed |
+| **OrbStack** | Homebrew | ✅ Auto-installed |
+| **Zoom** | Homebrew | ✅ Auto-installed |
+| **Slack** | Homebrew | ✅ Auto-installed |
+| **GarageBand** | Mac App Store | ⚠️ Manual install |
+
+### Development Tools
+
+| Tool Category | Included Packages | Status |
+|---------------|-------------------|--------|
+| **Languages** | Node.js, Python, Go, Rust | ✅ Latest versions |
+| **Version Control** | Git, GitHub CLI, Lazygit | ✅ Configured |
+| **Containers** | Docker, Docker Compose | ✅ Multi-platform |
+| **CLI Tools** | ripgrep, fzf, bat, eza, htop | ✅ Modern alternatives |
+| **Shell** | Zsh + Starship prompt | ✅ Enhanced experience |
+
+## 🔐 Privacy & Security
+
+This configuration implements several privacy safeguards:
+
+### 1. Environment Variables Protection
+- `.env` file is git-ignored and never committed
+- Personal identity information is build-time only
+- API keys are stored securely in user-specific locations
+
+### 2. API Key Management
+For Claude Code's MCP omnisearch functionality, create a `.env` file:
+
+**Supported locations:**
+- `./.env` (current directory)
 - `~/Projects/nix-project/.env` (default project location)
 - `~/.env` (home directory)
 
-Add your API keys (all optional):
+**API keys (all optional):**
 ```bash
 # Search providers
 TAVILY_API_KEY=your_key_here
@@ -39,6 +394,12 @@ PERPLEXITY_API_KEY=your_key_here
 JINA_AI_API_KEY=your_key_here
 FIRECRAWL_API_KEY=your_key_here
 ```
+
+### 3. Security Features
+- Pure Nix architecture eliminates shell script vulnerabilities
+- Declarative packages with controlled dependencies
+- HTTPS-only downloads from official sources
+- macOS Keychain integration for secure credential storage
 
 ## 🚀 Quick Start
 

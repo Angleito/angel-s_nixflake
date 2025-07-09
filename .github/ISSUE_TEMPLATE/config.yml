@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🗣️ Discussions
+    url: https://github.com/your-org/nix-project/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📖 Documentation
+    url: https://github.com/your-org/nix-project/blob/main/README.md
+    about: Check our documentation for setup and usage instructions
+  - name: 🔧 Nix Manual
+    url: https://nixos.org/manual/nix/stable/
+    about: Official Nix documentation and manual

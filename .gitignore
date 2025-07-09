@@ -6,5 +6,91 @@
 # User configuration directory
 .config/nix-project/
 
-# Nix build result
+# Nix build results
 result
+result-*
+
+# Nix-specific files
+.direnv/
+.envrc
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+Thumbs.db
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# Logs
+*.log
+logs/
+
+# Cache directories
+.cache/
+node_modules/
+.npm/
+.yarn/
+
+# Language-specific artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+target/
+.gradle/
+.mvn/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Generated documentation
+doc/
+docs/_build/
+
+# Test artifacts
+.coverage
+.pytest_cache/
+.tox/
+.nyc_output/
+coverage/
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/

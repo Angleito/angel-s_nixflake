@@ -1,4 +1,8 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
+
+let
+  jsonUtils = import ./json-utils.nix { inherit lib; };
+in
 
 {
   # Set the primary user (required for the options below)
@@ -37,6 +41,11 @@
       enableWalrus = true;
       enableVercel = true;
     };
+  };
+
+  # Program configurations
+  programs = {
+    git-env.enable = true;
   };
 
   system = {

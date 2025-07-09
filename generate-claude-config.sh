@@ -3,7 +3,52 @@
 
 set -e
 
+# Function to check if jq is installed
+check_jq() {
+  if ! command -v jq &> /dev/null; then
+    echo "❌ jq is not installed. Please install jq to use JSON validation."
+    echo "On macOS: brew install jq"
+    echo "On Ubuntu/Debian: sudo apt-get install jq"
+    exit 1
+  fi
+}
+
+# Function to validate and recover existing configuration
+validate_existing_config() {
+  local config_file="$1"
+  local backup_file="$2"
+  
+  if [ -f "$config_file" ]; then
+    if ! jq empty "$config_file" 2>/dev/null; then
+      echo "❌ Corrupted configuration detected: $config_file"
+      echo "🔄 Attempting to recover from backup..."
+      
+      if [ -f "$backup_file" ]; then
+        if jq empty "$backup_file" 2>/dev/null; then
+          cp "$backup_file" "$config_file"
+          echo "✅ Recovery successful. Backup restored for $config_file"
+          echo "Configuration corruption recovered on $(date)" >> /tmp/claude_config_errors.log
+        else
+          echo "❌ Backup file is also corrupted: $backup_file"
+          echo "Backup file corruption detected on $(date)" >> /tmp/claude_config_errors.log
+        fi
+      else
+        echo "❌ No backup available for $config_file"
+        echo "No backup available for recovery on $(date)" >> /tmp/claude_config_errors.log
+      fi
+    fi
+  fi
+}
+
+# Check for required tools
+check_jq
+
 echo "🔧 Generating Claude Code configuration..."
+
+# Check existing configurations for corruption
+echo "🔍 Checking existing configurations for corruption..."
+validate_existing_config "$HOME/.claude.json" "$HOME/.claude.json.bak"
+validate_existing_config "$HOME/.claude/settings.json" "$HOME/.claude/settings.json.bak"
 
 # Source the .env file to get API keys
 # First check in current directory, then in common locations
@@ -28,7 +73,9 @@ fi
 mkdir -p ~/.claude/commands/frontend ~/.claude/commands/backend ~/.local/bin
 
 # Generate main configuration with environment variables
-cat > ~/.claude.json << EOF
+# Validate JSON and create backup before writing
+MAIN_CONFIG=$(mktemp)
+cat > "$MAIN_CONFIG" << EOF
 {
   "numStartups": 0,
   "autoUpdaterStatus": "enabled",
@@ -79,8 +126,35 @@ cat > ~/.claude.json << EOF
 }
 EOF
 
+# Validate the JSON
+if jq empty "$MAIN_CONFIG"; then
+  echo "✅ JSON is valid."
+  # Backup existing configuration if it exists
+  if [ -f ~/.claude.json ]; then
+    cp ~/.claude.json ~/.claude.json.bak
+    echo "🔄 Backup of the existing configuration created."
+  fi
+  # Move new configuration to final location
+  mv "$MAIN_CONFIG" ~/.claude.json
+else
+  echo "❌ JSON validation failed!"
+  echo "🔄 Attempting to recover from backup..."
+  # Attempt recovery from backup
+  if [ -f ~/.claude.json.bak ]; then
+    cp ~/.claude.json.bak ~/.claude.json
+    echo "✅ Recovery successful. Backup restored."
+  else
+    echo "❌ No backup available. Recovery failed."
+  fi
+  # Log the error
+  echo "JSON validation error occurred on $(date)" >> /tmp/claude_config_errors.log
+  rm "$MAIN_CONFIG"
+fi
+EOF
+
 # Generate settings.json
-cat > ~/.claude/settings.json << EOF
+SETTINGS_CONFIG=$(mktemp)
+cat > "$SETTINGS_CONFIG" << EOF
 {
   "env": {
     "DISABLE_TELEMETRY": "1",
@@ -103,6 +177,31 @@ cat > ~/.claude/settings.json << EOF
   "contextWindow": 200000
 }
 EOF
+
+# Validate settings.json
+if jq empty "$SETTINGS_CONFIG"; then
+  echo "✅ Settings JSON is valid."
+  # Backup existing settings if it exists
+  if [ -f ~/.claude/settings.json ]; then
+    cp ~/.claude/settings.json ~/.claude/settings.json.bak
+    echo "🔄 Backup of the existing settings created."
+  fi
+  # Move new settings to final location
+  mv "$SETTINGS_CONFIG" ~/.claude/settings.json
+else
+  echo "❌ Settings JSON validation failed!"
+  echo "🔄 Attempting to recover from backup..."
+  # Attempt recovery from backup
+  if [ -f ~/.claude/settings.json.bak ]; then
+    cp ~/.claude/settings.json.bak ~/.claude/settings.json
+    echo "✅ Recovery successful. Settings backup restored."
+  else
+    echo "❌ No settings backup available. Recovery failed."
+  fi
+  # Log the error
+  echo "Settings JSON validation error occurred on $(date)" >> /tmp/claude_config_errors.log
+  rm "$SETTINGS_CONFIG"
+fi
 
 # Create claude wrapper script with permissions bypass
 echo "Creating claude wrapper script..."
@@ -411,12 +510,54 @@ Create a new API endpoint with the following specifications:
 - Add to API documentation if it exists
 EOF
 
-echo "✅ Claude Code configuration generated successfully!"
+# Final validation check
+echo "🔍 Performing final validation check..."
+CONFIG_VALID=true
+
+if [ -f ~/.claude.json ]; then
+  if jq empty ~/.claude.json 2>/dev/null; then
+    echo "✅ Main configuration validated successfully."
+  else
+    echo "❌ Main configuration validation failed!"
+    CONFIG_VALID=false
+  fi
+else
+  echo "❌ Main configuration file not found!"
+  CONFIG_VALID=false
+fi
+
+if [ -f ~/.claude/settings.json ]; then
+  if jq empty ~/.claude/settings.json 2>/dev/null; then
+    echo "✅ Settings configuration validated successfully."
+  else
+    echo "❌ Settings configuration validation failed!"
+    CONFIG_VALID=false
+  fi
+else
+  echo "❌ Settings configuration file not found!"
+  CONFIG_VALID=false
+fi
+
+if [ "$CONFIG_VALID" = true ]; then
+  echo "✅ Claude Code configuration generated successfully!"
+  echo "Configuration generation completed successfully on $(date)" >> /tmp/claude_config_errors.log
+else
+  echo "❌ Configuration generation completed with errors!"
+  echo "Configuration generation failed on $(date)" >> /tmp/claude_config_errors.log
+fi
+
 echo ""
 echo "Configuration files created:"
 echo "  📁 ~/.claude.json - Main configuration with MCP servers"
 echo "  🔧 ~/.claude/settings.json - Advanced settings"
 echo "  📝 ~/.claude/commands/ - Custom slash commands"
+echo ""
+echo "Backup files:"
+echo "  🔄 ~/.claude.json.bak - Backup of main configuration"
+echo "  🔄 ~/.claude/settings.json.bak - Backup of settings"
+echo ""
+echo "Error logging:"
+echo "  📝 /tmp/claude_config_errors.log - Error and recovery log"
 echo ""
 echo "Custom commands available:"
 echo "  /user:security-review  - Comprehensive security audit"
