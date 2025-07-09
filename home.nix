@@ -48,6 +48,7 @@ in
     # Development tools
     nodejs_20
     nodePackages.pnpm
+    bun
     python3
     go
     rustup
@@ -912,39 +913,6 @@ EOF
     chmod +x "$HOME/.config/git/hooks/commit-msg"
   '';
   
-  # Git configuration from .env file
-  home.activation.gitConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
-    echo "Setting up git configuration from .env file..."
-    
-    # Source .env file if it exists
-    ENV_FILES=(
-        "/Users/angel/Projects/nix-project/.env"
-        "$HOME/.config/nix-project/.env"
-        "$HOME/.env"
-    )
-    
-    for env_file in "''${ENV_FILES[@]}"; do
-        if [[ -f "$env_file" ]]; then
-            echo "Loading environment from: $env_file"
-            set -a
-            source "$env_file"
-            set +a
-            break
-        fi
-    done
-    
-    # Set git config if variables are available
-    if [[ -n "''${GIT_NAME:-}" ]]; then
-        echo "Setting git user.name to: $GIT_NAME"
-        git config --global user.name "$GIT_NAME"
-    fi
-    
-    if [[ -n "''${GIT_EMAIL:-}" ]]; then
-        echo "Setting git user.email to: $GIT_EMAIL"
-        git config --global user.email "$GIT_EMAIL"
-    fi
-  '';
-
   # Cursor MCP Configuration
   # Create the Cursor MCP configuration file with environment variable support
   home.activation.cursorMcpConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
