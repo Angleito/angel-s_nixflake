@@ -336,12 +336,12 @@ sudo pacman -S ca-certificates                       # Arch Linux
 
 ### Custom Packages
 
-| Package | Version | Platforms | Installation Method | Status |
-|---------|---------|-----------|-------------------|--------|
-| **Sui CLI** | 1.51.4 | All | Cargo (from source) | ✅ Stable |
-| **Walrus CLI** | testnet | All | Cargo (from source) | ✅ Stable |
-| **Vercel CLI** | Latest | All | ✅ NPM Wrapper | ✅ Stable |
-| **Claude Code** | Latest | All | ✅ AI Assistant | ✅ Stable |
+| Package | Version | Platforms | Status |
+|---------|---------|-----------|--------|
+| **Sui CLI** | 1.51.4 | All | ✅ Stable |
+| **Walrus CLI** | 1.28.1 | All | ✅ Stable |
+| **Vercel CLI** | Latest | All | ✅ NPM Wrapper |
+| **Claude Code** | Latest | All | ✅ AI Assistant |
 
 ### GUI Applications (macOS)
 
@@ -463,8 +463,8 @@ darwin-rebuild switch --flake .
 - **Version Control:** Git, GitHub CLI, Lazygit
 - **Containers:** Docker, Docker Compose
 - **Web3 Tools:**
-  - **Sui CLI** - Custom Nix package built from source using Cargo
-  - **Walrus CLI** - Custom Nix package built from source using Cargo
+  - **Sui CLI** - Custom Nix package with precompiled binaries
+  - **Walrus CLI** - Custom Nix package with precompiled binaries  
   - **Vercel CLI** - Custom Nix package with npm wrapper
 - **CLI Tools:** ripgrep, fzf, bat, eza, htop, and more
 - **Shell:** Zsh with autosuggestions, syntax highlighting, and Starship prompt
@@ -757,9 +757,9 @@ This configuration uses a **pure Nix modular architecture** that eliminates comp
 ├── flake.nix                 # Main flake with overlays and outputs
 ├── pkgs/                     # Custom package definitions
 │   ├── default.nix          # Package overlay
-│   ├── sui-cli/             # Sui CLI Nix package (Cargo-based)
-│   ├── walrus-cli/          # Walrus CLI Nix package (Cargo-based)
-│   └── vercel-cli/          # Vercel CLI Nix package (NPM wrapper)
+│   ├── sui-cli/             # Sui CLI Nix package
+│   ├── walrus-cli/          # Walrus CLI Nix package
+│   └── vercel-cli/          # Vercel CLI Nix package
 ├── modules/                  # Modular system configuration
 │   ├── default.nix          # Module entry point
 │   ├── development/         # Development tools modules
@@ -868,9 +868,9 @@ nix run .#install                  # Install from scratch (uses "angel" automati
 │   └── git.nix             # Git configuration with SSH setup
 ├── pkgs/                    # Custom package definitions
 │   ├── default.nix         # Package overlay
-│   ├── sui-cli/            # Sui CLI custom package (Cargo-based)
-│   ├── walrus-cli/         # Walrus CLI custom package (Cargo-based)
-│   └── vercel-cli/         # Vercel CLI custom package (NPM wrapper)
+│   ├── sui-cli/            # Sui CLI custom package
+│   ├── walrus-cli/         # Walrus CLI custom package
+│   └── vercel-cli/         # Vercel CLI custom package
 ├── modules/                 # Modular configuration system
 │   ├── default.nix         # Module entry point
 │   ├── development/        # Development tools modules
@@ -891,7 +891,6 @@ nix run .#install                  # Install from scratch (uses "angel" automati
 
 - **Pure Nix Architecture**: No complex shell scripts with potential vulnerabilities
 - **Declarative Packages**: All tools defined as proper Nix packages with controlled dependencies
-- **Source-based Builds**: Web3 tools (Sui, Walrus) built from source using Cargo for maximum security and reproducibility
 - **No Hardcoded Secrets**: Configuration validated to contain no API keys or passwords
 - **Secure Downloads**: All downloads use HTTPS from official sources
 - **Environment Isolation**: `.env` file is git-ignored and never committed
