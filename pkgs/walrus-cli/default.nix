@@ -7,18 +7,19 @@
 , darwin
 }:
 
-rustPlatform.buildRustPackage {
-  pname = "walrus-cli";
-  version = "testnet";
-  
+let
   src = fetchFromGitHub {
     owner = "MystenLabs";
     repo = "walrus";
     rev = "testnet";
-    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # To be updated with actual hash
+    hash = "sha256-9bM1Dypl/z7vOi76HsaIXIBOQ7D3B+20JbDwKh3aILY=";
   };
+in rustPlatform.buildRustPackage {
+  pname = "walrus-cli";
+  version = "testnet";
+  inherit src;
   
-  cargoHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # To be updated with actual hash
+  cargoHash = lib.fakeHash;
   
   # Build only the walrus binary
   cargoBuildFlags = [ "--bin" "walrus" ];

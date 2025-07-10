@@ -37,8 +37,8 @@ in
     nodejs.enable = true;
     web3 = {
       enable = true;
-      enableSui = true;
-      enableWalrus = true;
+      enableSui = false;        # Temporarily disabled due to build complexity
+      enableWalrus = false;     # Temporarily disabled due to build complexity  
       enableVercel = true;
     };
   };

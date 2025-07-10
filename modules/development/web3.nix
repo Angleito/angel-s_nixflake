@@ -17,31 +17,17 @@
       sui-cli
     ] ++ lib.optionals config.development.web3.enableWalrus [
       walrus-cli
-      suiup
     ] ++ lib.optionals config.development.web3.enableVercel [
       vercel-cli
     ];
 
-    # Set up Walrus via suiup if enabled
+    # Set up Walrus configuration directory if enabled
     system.activationScripts.walrusConfig = lib.mkIf config.development.web3.enableWalrus {
       text = ''
         USER_HOME="${config.users.users.${config.system.primaryUser}.home}"
         
-        # Create Walrus directories
+        # Create Walrus configuration directory
         sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.config/walrus"
-        sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.suiup"
-        sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.local/bin"
-        
-        # Install Walrus via suiup
-        sudo -u ${config.system.primaryUser} bash -c "
-          export HOME=$USER_HOME
-          export SUIUP_HOME=$USER_HOME/.suiup
-          export SUIUP_DEFAULT_BIN_DIR=$USER_HOME/.local/bin
-          export PATH=$USER_HOME/.local/bin:$PATH
-          
-          # Install walrus using suiup
-          ${pkgs.suiup}/bin/suiup install walrus --latest || true
-        "
         
         # Copy default config if it doesn't exist
         if [ ! -f "$USER_HOME/.config/walrus/client_config.yaml" ]; then

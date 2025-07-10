@@ -90,9 +90,9 @@ in
     unzip
     p7zip
     
-    # Web3 tools
-    sui-cli
-    walrus-cli
+    # Web3 tools (temporarily disabled due to build complexity)
+    # sui-cli
+    # walrus-cli
   ];
 
   # Zsh configuration
@@ -191,11 +191,11 @@ in
   home.file.".local/bin/claude" = {
     text = ''
       #!/bin/bash
-      # Source .env file - check multiple locations
-      if [ -f "./.env" ]; then
-        export $(grep -v '^#' "./.env" | xargs)
-      elif [ -f "$HOME/Projects/nix-project/.env" ]; then
+      # Source .env file - check multiple locations (prioritize project directory)
+      if [ -f "$HOME/Projects/nix-project/.env" ]; then
         export $(grep -v '^#' "$HOME/Projects/nix-project/.env" | xargs)
+      elif [ -f "./.env" ]; then
+        export $(grep -v '^#' "./.env" | xargs)
       elif [ -f "$HOME/.env" ]; then
         export $(grep -v '^#' "$HOME/.env" | xargs)
       fi
@@ -226,27 +226,6 @@ in
         theme = "dark";
         hasCompletedOnboarding = true;
         mcpServers = {
-          filesystem = {
-            command = "${pkgs.nodejs_20}/bin/node";
-            args = [
-              "${pkgs.nodejs_20}/bin/npm"
-              "exec"
-              "--"
-              "@modelcontextprotocol/server-filesystem"
-              "/Users/${config.home.username}"
-              "/Users/${config.home.username}/Projects"
-              "/Users/${config.home.username}/Documents"
-            ];
-          };
-          memory = {
-            command = "${pkgs.nodejs_20}/bin/node";
-            args = [
-              "${pkgs.nodejs_20}/bin/npm"
-              "exec"
-              "--"
-              "@modelcontextprotocol/server-memory"
-            ];
-          };
           puppeteer = {
             command = "${pkgs.nodejs_20}/bin/node";
             args = [
@@ -279,23 +258,21 @@ in
         FIRECRAWL_API_KEY = if firecrawlApiKey != "" then firecrawlApiKey else null;
       };
       
-      # Add omnisearch server if any API keys are available
-      finalConfig = if omnisearchEnv != {} then 
-        baseConfig // {
-          mcpServers = baseConfig.mcpServers // {
-            mcp-omnisearch = {
-              command = "${pkgs.nodejs_20}/bin/node";
-              args = [
-                "${pkgs.nodejs_20}/bin/npm"
-                "exec"
-                "--"
-                "mcp-omnisearch"
-              ];
-              env = omnisearchEnv;
-            };
+      # Always add omnisearch server with available API keys
+      finalConfig = baseConfig // {
+        mcpServers = baseConfig.mcpServers // {
+          mcp-omnisearch = {
+            command = "${pkgs.nodejs_20}/bin/node";
+            args = [
+              "${pkgs.nodejs_20}/bin/npm"
+              "exec"
+              "--"
+              "mcp-omnisearch"
+            ];
+            env = omnisearchEnv;
           };
-        }
-      else baseConfig;
+        };
+      };
       
       # Convert to JSON string
       configJson = builtins.toJSON finalConfig;
@@ -972,27 +949,6 @@ EOF
     cat > "$CURSOR_MCP_PATH" << EOF
 {
   "mcpServers": {
-    "filesystem": {
-      "command": "${pkgs.nodejs_20}/bin/node",
-      "args": [
-        "${pkgs.nodejs_20}/bin/npm",
-        "exec",
-        "--",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/${config.home.username}",
-        "/Users/${config.home.username}/Projects",
-        "/Users/${config.home.username}/Documents"
-      ]
-    },
-    "memory": {
-      "command": "${pkgs.nodejs_20}/bin/node",
-      "args": [
-        "${pkgs.nodejs_20}/bin/npm",
-        "exec",
-        "--",
-        "@modelcontextprotocol/server-memory"
-      ]
-    },
     "sequential-thinking": {
       "command": "${pkgs.nodejs_20}/bin/node",
       "args": [
