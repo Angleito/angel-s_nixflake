@@ -1,30 +1,45 @@
 { lib
 , stdenv
-, makeWrapper
-, suiup
+, fetchFromGitHub
+, rustPlatform
+, pkg-config
+, openssl
+, darwin
 }:
 
-stdenv.mkDerivation {
+rustPlatform.buildRustPackage {
   pname = "walrus-cli";
-  version = "latest";
+  version = "testnet";
   
-  # No source needed - we'll use suiup to install
-  dontUnpack = true;
+  src = fetchFromGitHub {
+    owner = "MystenLabs";
+    repo = "walrus";
+    rev = "testnet";
+    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # To be updated with actual hash
+  };
   
-  nativeBuildInputs = [ makeWrapper ];
+  cargoHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # To be updated with actual hash
   
-  buildInputs = [ suiup ];
+  # Build only the walrus binary
+  cargoBuildFlags = [ "--bin" "walrus" ];
   
-  # No build phase needed
-  dontBuild = true;
+  nativeBuildInputs = [
+    pkg-config
+  ];
   
-  # Install via suiup
-  installPhase = ''
-    runHook preInstall
-    
-    # Create bin directory
-    mkdir -p $out/bin
-    
+  buildInputs = [
+    openssl
+  ] ++ lib.optionals stdenv.isDarwin [
+    darwin.apple_sdk.frameworks.Security
+    darwin.apple_sdk.frameworks.CoreFoundation
+    darwin.apple_sdk.frameworks.SystemConfiguration
+  ];
+  
+  # Set environment variables for OpenSSL
+  OPENSSL_NO_VENDOR = 1;
+  
+  # Install default configuration
+  postInstall = ''
     # Create configuration directory
     mkdir -p $out/share/walrus
     
@@ -48,101 +63,18 @@ storage_nodes:
     rpc_url: https://walrus.testnet.arcadia.global
     rest_url: https://walrus-storage.testnet.arcadia.global/v1
 EOF
-    
-    # Create wrapper script that uses suiup to install and run walrus
-    cat > $out/bin/walrus << 'EOF'
-#!/bin/bash
-
-# Set up environment
-export SUIUP_HOME="$HOME/.suiup"
-export SUIUP_DEFAULT_BIN_DIR="$HOME/.local/bin"
-
-# Create necessary directories
-mkdir -p "$SUIUP_HOME"
-mkdir -p "$SUIUP_DEFAULT_BIN_DIR"
-
-# Add to PATH if not already there
-if [[ ":$PATH:" != *":$SUIUP_DEFAULT_BIN_DIR:"* ]]; then
-    export PATH="$SUIUP_DEFAULT_BIN_DIR:$PATH"
-fi
-
-# Check if walrus is installed via suiup
-if [[ ! -f "$SUIUP_DEFAULT_BIN_DIR/walrus" ]]; then
-    echo "Installing Walrus CLI via suiup..."
-    ${suiup}/bin/suiup install walrus --latest
-fi
-
-# Set up config if needed
-CONFIG_DIR="$HOME/.config/walrus"
-CONFIG_FILE="$CONFIG_DIR/client_config.yaml"
-
-# Create config directory if it doesn't exist
-mkdir -p "$CONFIG_DIR"
-
-# Copy default config if user config doesn't exist
-if [[ ! -f "$CONFIG_FILE" ]]; then
-    cp "${placeholder "out"}/share/walrus/client_config.yaml" "$CONFIG_FILE"
-fi
-
-# Try to run walrus from suiup installation
-if [[ -f "$SUIUP_DEFAULT_BIN_DIR/walrus" ]]; then
-    exec "$SUIUP_DEFAULT_BIN_DIR/walrus" "$@"
-else
-    echo "Error: Walrus CLI not found. Please run 'suiup install walrus' manually."
-    exit 1
-fi
-EOF
-    
-    chmod +x $out/bin/walrus
-    
-    runHook postInstall
-  '';
-  
-  # Create activation script for system setup
-  postInstall = ''
-    # Create activation script
-    cat > $out/share/walrus/activate.sh << 'EOF'
-#!/bin/bash
-
-# Set up walrus for the user
-USER_HOME="$1"
-USER_NAME="$2"
-
-# Create walrus directories
-sudo -u "$USER_NAME" mkdir -p "$USER_HOME/.config/walrus"
-sudo -u "$USER_NAME" mkdir -p "$USER_HOME/.suiup"
-sudo -u "$USER_NAME" mkdir -p "$USER_HOME/.local/bin"
-
-# Install walrus via suiup
-sudo -u "$USER_NAME" bash -c "
-  export HOME=$USER_HOME
-  export SUIUP_HOME=$USER_HOME/.suiup
-  export SUIUP_DEFAULT_BIN_DIR=$USER_HOME/.local/bin
-  export PATH=$USER_HOME/.local/bin:$PATH
-  
-  # Install walrus
-  ${suiup}/bin/suiup install walrus --latest || true
-  
-  # Copy default config if it doesn't exist
-  if [[ ! -f $USER_HOME/.config/walrus/client_config.yaml ]]; then
-    cp ${placeholder "out"}/share/walrus/client_config.yaml $USER_HOME/.config/walrus/client_config.yaml
-  fi
-"
-EOF
-
-    chmod +x $out/share/walrus/activate.sh
   '';
   
   meta = with lib; {
-    description = "Walrus CLI - Command line interface for the Walrus decentralized storage and data availability protocol (installed via suiup)";
+    description = "Walrus CLI - Command line interface for the Walrus decentralized storage and data availability protocol";
     longDescription = ''
       Walrus is a decentralized storage and data availability protocol designed to provide
-      high-performance, low-cost storage for large data objects. This package uses suiup
-      to install and manage the Walrus CLI, ensuring you always have the latest version.
+      high-performance, low-cost storage for large data objects. This package builds the
+      Walrus CLI from source using cargo.
     '';
     homepage = "https://github.com/MystenLabs/walrus";
     license = licenses.asl20;
-    platforms = platforms.unix;
+    platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
     maintainers = [ ];
     mainProgram = "walrus";
   };
