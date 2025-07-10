@@ -90,9 +90,9 @@ in
     unzip
     p7zip
     
-    # Web3 tools (temporarily disabled due to build complexity)
-    # sui-cli
-    # walrus-cli
+    # Web3 tools
+    sui-cli
+    walrus-cli
   ];
 
   # Zsh configuration
