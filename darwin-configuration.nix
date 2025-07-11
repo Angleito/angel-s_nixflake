@@ -37,9 +37,10 @@ in
     nodejs.enable = true;
     web3 = {
       enable = true;
-      enableSui = true;
-      enableWalrus = true;
+      enableSui = true;     # Using cargo installation
+      enableWalrus = true;  # Using cargo installation
       enableVercel = true;
+      useCargoInstall = true; # New flag to use cargo instead of nix packages
     };
   };
 

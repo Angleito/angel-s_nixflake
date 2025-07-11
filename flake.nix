@@ -49,16 +49,16 @@
       let
         pkgs = nixpkgsFor.${system};
       in {
-        sui-cli = pkgs.sui-cli;
-        walrus-cli = pkgs.walrus-cli;
+        # sui-cli = pkgs.sui-cli;        # Using cargo install instead
+        # walrus-cli = pkgs.walrus-cli;  # Using cargo install instead
         vercel-cli = pkgs.vercel-cli;
         
         # Meta packages for convenience
         web3-tools = pkgs.buildEnv {
           name = "web3-tools";
           paths = with pkgs; [
-            sui-cli
-            walrus-cli
+            # sui-cli      # Using cargo install instead
+            # walrus-cli   # Using cargo install instead
             vercel-cli
           ];
         };
@@ -97,14 +97,14 @@
       let
         pkgs = nixpkgsFor.${system};
       in {
-        sui = {
-          type = "app";
-          program = "${pkgs.sui-cli}/bin/sui";
-        };
-        walrus = {
-          type = "app";
-          program = "${pkgs.walrus-cli}/bin/walrus";
-        };
+        # sui = {
+        #   type = "app";
+        #   program = "${pkgs.sui-cli}/bin/sui";
+        # };                                  # Using cargo install instead
+        # walrus = {
+        #   type = "app";
+        #   program = "${pkgs.walrus-cli}/bin/walrus";
+        # };                                  # Using cargo install instead
         vercel = {
           type = "app";
           program = "${pkgs.vercel-cli}/bin/vercel";
@@ -297,8 +297,8 @@
             jq
             
             # Our custom packages
-            sui-cli
-            walrus-cli
+            # sui-cli      # Using cargo install instead
+            # walrus-cli   # Using cargo install instead
             vercel-cli
             
             # System-specific tools
@@ -319,8 +319,8 @@
             echo "Architecture: ${pkgs.stdenv.hostPlatform.parsed.cpu.name}"
             echo ""
             echo "Available tools:"
-            echo "  • sui-cli: $(sui --version 2>/dev/null || echo 'installed')"
-            echo "  • walrus-cli: $(walrus --version 2>/dev/null || echo 'installed')" 
+            echo "  • sui-cli: $(sui --version 2>/dev/null || echo 'install via cargo')"
+            echo "  • walrus-cli: $(walrus --version 2>/dev/null || echo 'install via cargo')" 
             echo "  • vercel-cli: $(vercel --version 2>/dev/null || echo 'installed')"
             echo ""
             echo "Run 'nix flake show' to see all available packages and apps"
