@@ -1,47 +1,59 @@
 { lib
 , stdenv
-, fetchFromGitHub
-, rustPlatform
-, pkg-config
-, openssl
-, darwin
+, fetchurl
+, unzip
 }:
 
 let
-  version = "1.51.4";
-in rustPlatform.buildRustPackage {
+  version = "1.51.5";
+  
+  # System-specific binary URLs
+  urls = {
+    "x86_64-linux" = "https://github.com/MystenLabs/sui/releases/download/mainnet-v${version}/sui-mainnet-v${version}-ubuntu-x86_64.tgz";
+    "aarch64-linux" = "https://github.com/MystenLabs/sui/releases/download/mainnet-v${version}/sui-mainnet-v${version}-ubuntu-aarch64.tgz";
+    "x86_64-darwin" = "https://github.com/MystenLabs/sui/releases/download/mainnet-v${version}/sui-mainnet-v${version}-macos-x86_64.tgz";
+    "aarch64-darwin" = "https://github.com/MystenLabs/sui/releases/download/mainnet-v${version}/sui-mainnet-v${version}-macos-arm64.tgz";
+  };
+  
+  # System-specific hashes
+  hashes = {
+    "x86_64-linux" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";  # Placeholder
+    "aarch64-linux" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";  # Placeholder
+    "x86_64-darwin" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";   # Placeholder
+    "aarch64-darwin" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";  # Placeholder
+  };
+  
+  url = urls.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
+  hash = hashes.${stdenv.hostPlatform.system} or (throw "Unsupported system: ${stdenv.hostPlatform.system}");
+in
+
+stdenv.mkDerivation {
   pname = "sui-cli";
   inherit version;
   
-  src = fetchFromGitHub {
-    owner = "MystenLabs";
-    repo = "sui";
-    rev = "mainnet-v${version}";
-    hash = "sha256-9bM1Dypl/z7vOi76HsaIXIBOQ7D3B+20JbDwKh3aILY=";
+  src = fetchurl {
+    inherit url;
+    # Use lib.fakeSha256 to get the actual hash during build
+    sha256 = lib.fakeSha256;
   };
   
-  cargoHash = "sha256-lRJA/Rz8+n1dY7iiY6hsNcYSFdGCdbvb9u7F6V0IpUw=";
+  sourceRoot = ".";
   
-  # Build only the sui binary
-  cargoBuildFlags = [ "--bin" "sui" ];
-  
-  nativeBuildInputs = [
-    pkg-config
-  ];
-  
-  buildInputs = [
-    openssl
-  ] ++ lib.optionals stdenv.isDarwin [
-    darwin.apple_sdk.frameworks.Security
-    darwin.apple_sdk.frameworks.CoreFoundation
-    darwin.apple_sdk.frameworks.SystemConfiguration
-  ];
-  
-  # Set environment variables for OpenSSL
-  OPENSSL_NO_VENDOR = 1;
-  
-  # Disable failing tests
-  doCheck = false;
+  installPhase = ''
+    mkdir -p $out/bin
+    
+    # The archive should contain the sui binary
+    if [ -f sui ]; then
+      cp sui $out/bin/sui
+    elif [ -f ./sui ]; then
+      cp ./sui $out/bin/sui
+    else
+      # Look for sui binary in extracted files
+      find . -name "sui" -type f -executable | head -1 | xargs -I {} cp {} $out/bin/sui
+    fi
+    
+    chmod +x $out/bin/sui
+  '';
   
   meta = with lib; {
     description = "Sui CLI - Command line interface for the Sui blockchain";

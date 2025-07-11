@@ -90,9 +90,9 @@ in
     unzip
     p7zip
     
-    # Web3 tools
-    sui-cli
-    walrus-cli
+    # Blockchain tools
+    # sui-cli      # Temporarily disabled due to build issues
+    # walrus-cli   # Temporarily disabled due to build issues
   ];
 
   # Zsh configuration

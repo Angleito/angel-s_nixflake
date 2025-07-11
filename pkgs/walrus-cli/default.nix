@@ -16,10 +16,10 @@ rustPlatform.buildRustPackage {
     owner = "MystenLabs";
     repo = "walrus";
     rev = "testnet";
-    hash = "sha256-9bM1Dypl/z7vOi76HsaIXIBOQ7D3B+20JbDwKh3aILY=";
+    hash = "sha256-FyrIPhHfeIOcrHcj+vlqHHnWnYkf0UrIXLLK0ETFFJo=";
   };
   
-  cargoHash = "sha256-gU1aTdqBkzKKKdYi7DdG6/l+dleH+qM6HQvDq//mwVE=";
+  cargoHash = "sha256-RTrLZDKz6pN6o5lZxbXr/03vlUuEGEUstnSt4QPufBE=";
   
   # Build only the walrus binary
   cargoBuildFlags = [ "--bin" "walrus" ];
