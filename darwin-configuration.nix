@@ -42,11 +42,18 @@ in
       enableVercel = true;
       useCargoInstall = true; # New flag to use cargo instead of nix packages
     };
+    database = {
+      enable = true;
+      postgresql.enable = true;
+      postgresql.version = "14";
+    };
   };
 
   # Program configurations
   programs = {
     git-env.enable = true;
+    claude-code.enable = true;
+    cursor.enable = true;
   };
 
   system = {

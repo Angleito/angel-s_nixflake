@@ -27,7 +27,9 @@
       
       # Homebrew formulae (CLI tools)
       brews = [
-        "mas" # Mac App Store CLI
+        "mas"   # Mac App Store CLI
+        "flock" # File locking utility
+        # NOTE: PostgreSQL moved to nix package management (see modules/development/database.nix)
       ];
       
       # Homebrew casks (GUI applications)

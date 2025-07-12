@@ -470,9 +470,9 @@ darwin-rebuild switch --flake .
 - **Shell:** Zsh with autosuggestions, syntax highlighting, and Starship prompt
 - **AI Tools:** Claude Code CLI with comprehensive configuration
 
-## 🤖 Claude Code Configuration
+## 🤖 AI Development Environment Integration
 
-This setup includes a complete Claude Code configuration with custom slash commands and MCP servers.
+This setup includes complete declarative management of both Claude Code and Cursor AI editor configurations, ensuring consistent AI-enhanced development environments across all machines.
 
 ### Custom Slash Commands
 
@@ -563,13 +563,33 @@ MCP servers that require API keys are automatically configured from environment 
 
 **API Key Setup**: Replace the placeholder values in your `.env` file with actual API keys to enable the respective services. The configuration will automatically use these keys when you rebuild.
 
-### Configuration Files
+### Automatic Configuration Management
 
-Claude Code configuration is automatically created:
+#### Claude Code (`modules/programs/claude-code.nix`)
+- **Settings**: `~/.claude/settings.json` with MCP servers and security defaults
+- **Memory Integration**: Automated mem0 setup with context-aware scripts
+- **Environment Loading**: Custom wrapper that sources .env files automatically
+- **MCP Servers**: puppeteer, playwright, mcp-omnisearch pre-configured
 
-- `~/.claude.json` - Main configuration with MCP servers and global settings
-- `~/.claude/commands/` - Directory containing all custom slash commands
-- `~/.claude/settings.json` - Advanced settings with security defaults
+#### Cursor AI Editor (`modules/programs/cursor.nix`)  
+- **MCP Configuration**: `~/.cursor/mcp.json` with sequential-thinking, omnisearch, openmemory
+- **User Settings**: Editor preferences, themes, auto-save automatically configured
+- **Keybindings**: Custom shortcuts (cmd+i for composer mode)
+- **Launch Arguments**: Performance optimization and crash reporting settings
+
+#### Database Management (`modules/development/database.nix`)
+- **PostgreSQL**: Full nix package installation with user scripts
+- **Management Scripts**: `postgres-start`, `postgres-stop`, `postgres-status`
+- **Data Directory**: `~/.postgresql/data` for user-owned databases
+- **Redis Support**: Optional Redis configuration with similar management
+
+### Integration Benefits
+
+✅ **One-Command Setup**: Complete AI environment from `darwin-rebuild switch`
+✅ **No Reconfiguration**: Claude Code and Cursor work immediately on new machines  
+✅ **Centralized Management**: All configurations tracked in git
+✅ **Environment Consistency**: Same setup across all development machines
+✅ **Tool Lifecycle**: Automated installation and updates for cargo-based tools
 
 ## 📚 Development Best Practices
 
@@ -840,9 +860,10 @@ nix run .#install                  # Install from scratch (uses "angel" automati
 - `nix flake update` - Update all flake inputs to latest versions
 - `nix flake check` - Validate configuration
 - `./install.sh` - Complete setup from scratch
+- `./scripts/validate-integration.sh` - Validate all integrated configurations
 
-### Claude Code
-- `claude` - Start Claude Code CLI (with permissions bypass for development)
+### AI Development Tools
+- `claude` - Start Claude Code CLI (with environment loading and permissions bypass)
 - `/user:security-review` - Run security audit
 - `/user:optimize [files]` - Analyze and optimize performance
 - `/user:deploy` - Smart deployment with checks
@@ -851,10 +872,18 @@ nix run .#install                  # Install from scratch (uses "angel" automati
 - `/user:frontend:component [name]` - Generate React/Vue component
 - `/user:backend:api [name]` - Generate API endpoint
 
-### Custom CLI Tools
-- `sui` - Sui blockchain CLI (custom Nix package)
-- `walrus` - Walrus decentralized storage CLI (custom Nix package)  
+### Database Management
+- `postgres-start` - Start PostgreSQL server
+- `postgres-stop` - Stop PostgreSQL server
+- `postgres-status` - Check PostgreSQL status
+- `redis-start` - Start Redis server (if enabled)
+- `redis-stop` - Stop Redis server (if enabled)
+
+### Web3 Development
+- `sui` - Sui blockchain CLI (custom Nix package or cargo-installed)
+- `walrus` - Walrus decentralized storage CLI (custom Nix package or cargo-installed)
 - `vercel` - Vercel deployment CLI (custom Nix package)
+- `update-web3-tools` - Update all cargo-installed web3 tools
 
 ## 📁 Project Structure
 
@@ -873,14 +902,24 @@ nix run .#install                  # Install from scratch (uses "angel" automati
 │   └── vercel-cli/         # Vercel CLI custom package
 ├── modules/                 # Modular configuration system
 │   ├── default.nix         # Module entry point
+│   ├── applications/       # Application management
+│   │   └── homebrew.nix   # GUI applications via Homebrew
 │   ├── development/        # Development tools modules
 │   │   ├── rust.nix       # Rust development setup
 │   │   ├── nodejs.nix     # Node.js development setup
-│   │   └── web3.nix       # Web3 tools configuration
+│   │   ├── web3.nix       # Web3 tools configuration
+│   │   └── database.nix   # PostgreSQL/Redis management
+│   ├── programs/          # Program configurations
+│   │   ├── claude-code.nix # Claude Code AI configuration
+│   │   ├── cursor.nix     # Cursor AI editor configuration
+│   │   └── git-env.nix    # Git environment integration
 │   └── system/            # System configuration modules
 │       ├── defaults.nix   # macOS system defaults
+│       ├── environment.nix # Environment variable management
 │       ├── power.nix      # Power management settings
 │       └── xcode.nix      # Xcode command line tools
+├── scripts/                # Utility scripts
+│   └── validate-integration.sh # Integration validation script
 ├── install.sh              # Automated installation script
 ├── .env.sample             # Template for personal variables
 ├── .env                    # Personal variables (git-ignored)

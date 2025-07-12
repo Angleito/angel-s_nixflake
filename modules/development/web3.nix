@@ -22,15 +22,38 @@
       vercel-cli
     ];
 
-    # Cargo-based installation scripts
+    # Enhanced cargo-based installation scripts with better lifecycle management
     system.activationScripts.cargoInstallSui = lib.mkIf (config.development.web3.enableSui && config.development.web3.useCargoInstall) {
       text = ''
         USER_HOME="${config.users.users.${config.system.primaryUser}.home}"
+        CARGO_BIN_DIR="$USER_HOME/.cargo/bin"
+        SUI_BIN="$CARGO_BIN_DIR/sui"
         
-        # Install sui CLI via cargo if not already installed
-        if ! sudo -u ${config.system.primaryUser} command -v sui &> /dev/null; then
-          echo "Installing sui CLI via cargo..."
-          sudo -u ${config.system.primaryUser} /run/current-system/sw/bin/cargo install --locked sui-client
+        # Create cargo bin directory if it doesn't exist
+        sudo -u ${config.system.primaryUser} mkdir -p "$CARGO_BIN_DIR"
+        
+        # Check if sui CLI exists and is accessible
+        if ! sudo -u ${config.system.primaryUser} test -f "$SUI_BIN" || ! sudo -u ${config.system.primaryUser} "$SUI_BIN" --version &>/dev/null; then
+          echo "Installing/updating sui CLI via cargo..."
+          
+          # Remove old installation if it exists but is broken
+          if sudo -u ${config.system.primaryUser} test -f "$SUI_BIN"; then
+            sudo -u ${config.system.primaryUser} rm -f "$SUI_BIN"
+          fi
+          
+          # Install with better error handling
+          if sudo -u ${config.system.primaryUser} /run/current-system/sw/bin/cargo install --locked sui-client; then
+            echo "✓ sui CLI installed successfully"
+          else
+            echo "✗ Failed to install sui CLI"
+          fi
+        else
+          echo "✓ sui CLI already installed and working"
+        fi
+        
+        # Ensure it's in PATH by creating symlink in /usr/local/bin if needed
+        if [ -f "$SUI_BIN" ] && [ ! -L "/usr/local/bin/sui" ]; then
+          ln -sf "$SUI_BIN" "/usr/local/bin/sui" 2>/dev/null || true
         fi
       '';
     };
@@ -38,12 +61,69 @@
     system.activationScripts.cargoInstallWalrus = lib.mkIf (config.development.web3.enableWalrus && config.development.web3.useCargoInstall) {
       text = ''
         USER_HOME="${config.users.users.${config.system.primaryUser}.home}"
+        CARGO_BIN_DIR="$USER_HOME/.cargo/bin"
+        WALRUS_BIN="$CARGO_BIN_DIR/walrus"
         
-        # Install walrus CLI via cargo if not already installed
-        if ! sudo -u ${config.system.primaryUser} command -v walrus &> /dev/null; then
-          echo "Installing walrus CLI via cargo..."
-          sudo -u ${config.system.primaryUser} /run/current-system/sw/bin/cargo install --git https://github.com/MystenLabs/walrus.git --branch testnet walrus-cli
+        # Create cargo bin directory if it doesn't exist
+        sudo -u ${config.system.primaryUser} mkdir -p "$CARGO_BIN_DIR"
+        
+        # Check if walrus CLI exists and is accessible
+        if ! sudo -u ${config.system.primaryUser} test -f "$WALRUS_BIN" || ! sudo -u ${config.system.primaryUser} "$WALRUS_BIN" --version &>/dev/null; then
+          echo "Installing/updating walrus CLI via cargo..."
+          
+          # Remove old installation if it exists but is broken
+          if sudo -u ${config.system.primaryUser} test -f "$WALRUS_BIN"; then
+            sudo -u ${config.system.primaryUser} rm -f "$WALRUS_BIN"
+          fi
+          
+          # Install with better error handling and timeout
+          if timeout 300 sudo -u ${config.system.primaryUser} /run/current-system/sw/bin/cargo install --git https://github.com/MystenLabs/walrus.git --branch testnet walrus-cli; then
+            echo "✓ walrus CLI installed successfully"
+          else
+            echo "✗ Failed to install walrus CLI (may have timed out)"
+          fi
+        else
+          echo "✓ walrus CLI already installed and working"
         fi
+        
+        # Ensure it's in PATH by creating symlink in /usr/local/bin if needed
+        if [ -f "$WALRUS_BIN" ] && [ ! -L "/usr/local/bin/walrus" ]; then
+          ln -sf "$WALRUS_BIN" "/usr/local/bin/walrus" 2>/dev/null || true
+        fi
+      '';
+    };
+    
+    # Cargo tool maintenance script
+    system.activationScripts.cargoToolMaintenance = lib.mkIf config.development.web3.useCargoInstall {
+      text = ''
+        USER_HOME="${config.users.users.${config.system.primaryUser}.home}"
+        
+        # Create a maintenance script for cargo-installed tools
+        cat > "$USER_HOME/.local/bin/update-web3-tools" << 'EOF'
+        #!/bin/bash
+        # Update cargo-installed web3 tools
+        
+        echo "Updating web3 tools installed via cargo..."
+        
+        ${lib.optionalString config.development.web3.enableSui ''
+        if command -v sui &>/dev/null; then
+          echo "Updating sui CLI..."
+          cargo install --locked sui-client --force
+        fi
+        ''}
+        
+        ${lib.optionalString config.development.web3.enableWalrus ''
+        if command -v walrus &>/dev/null; then
+          echo "Updating walrus CLI..."
+          cargo install --git https://github.com/MystenLabs/walrus.git --branch testnet walrus-cli --force
+        fi
+        ''}
+        
+        echo "Web3 tools update complete!"
+        EOF
+        
+        # Make maintenance script executable
+        chmod +x "$USER_HOME/.local/bin/update-web3-tools"
       '';
     };
 
