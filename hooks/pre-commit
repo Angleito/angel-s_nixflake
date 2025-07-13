@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Pre-commit hook to prevent SSH keys from being committed
+
+# Check for SSH key patterns in staged files
+if git diff --cached --name-only | xargs -I {} grep -l "BEGIN.*PRIVATE KEY\|BEGIN RSA PRIVATE KEY\|BEGIN ED25519 PRIVATE KEY\|BEGIN ECDSA PRIVATE KEY\|BEGIN DSA PRIVATE KEY\|BEGIN OPENSSH PRIVATE KEY" {} 2>/dev/null; then
+    echo "ERROR: SSH private key detected in staged files!"
+    echo "Remove the private key before committing."
+    exit 1
+fi
+
+# Check for common SSH key file patterns
+if git diff --cached --name-only | grep -E "(^|/)id_(rsa|ed25519|ecdsa|dsa)(\.(pub|key))?$|\.ssh$|\.ppk$|\.openssh$"; then
+    echo "ERROR: SSH key file detected in staged files!"
+    echo "SSH key files should not be committed to version control."
+    exit 1
+fi
+
+# Check for SSH public key patterns (as an extra safety measure)
+if git diff --cached --name-only | xargs -I {} grep -l "ssh-rsa\|ssh-ed25519\|ssh-ecdsa\|ssh-dss" {} 2>/dev/null; then
+    echo "WARNING: SSH public key detected in staged files!"
+    echo "Consider if this public key should really be committed."
+    echo "If you're sure, run: git commit --no-verify"
+    read -p "Continue with commit? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+
+exit 0
