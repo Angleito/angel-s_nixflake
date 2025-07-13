@@ -26,13 +26,21 @@ in
       # Sign commits with SSH key
       commit.gpgsign = true;
       gpg.format = "ssh";
-      user.signingkey = "~/.ssh/id_ed25519.pub";
+      user.signingkey = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
+      
+      # SSH signature verification
+      gpg.ssh.allowedSignersFile = "${config.home.homeDirectory}/.ssh/allowed_signers";
       
       # Use macOS keychain for credentials
       credential.helper = "osxkeychain";
       
       # Hooks configuration
       core.hooksPath = "~/.config/git/hooks";
+      
+      # Additional git settings
+      init.defaultBranch = "main";
+      push.autoSetupRemote = true;
+      pull.rebase = false;
     };
   };
   

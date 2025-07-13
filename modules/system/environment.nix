@@ -174,6 +174,11 @@ in {
     # Add shell integration for automatic environment loading
     programs.zsh.enable = true;
     programs.zsh.interactiveShellInit = ''
+      # Add cargo bin to PATH if it exists
+      if [[ -d "$HOME/.cargo/bin" ]]; then
+        export PATH="$HOME/.cargo/bin:$PATH"
+      fi
+      
       # Load environment variables from .env file
       if [[ -f "$HOME/.config/nix-project/.env" ]]; then
         set -a
@@ -184,6 +189,11 @@ in {
     
     programs.bash.enable = true;
     programs.bash.interactiveShellInit = ''
+      # Add cargo bin to PATH if it exists
+      if [[ -d "$HOME/.cargo/bin" ]]; then
+        export PATH="$HOME/.cargo/bin:$PATH"
+      fi
+      
       # Load environment variables from .env file
       if [[ -f "$HOME/.config/nix-project/.env" ]]; then
         set -a

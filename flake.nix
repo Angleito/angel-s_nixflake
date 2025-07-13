@@ -251,6 +251,38 @@
         ];
       };
       
+      # Configuration for angel's MacBook Pro
+      "angels-MacBook-Pro" = darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        
+        specialArgs = { inherit self; };
+        
+        modules = [
+          # Allow unfree packages
+          {
+            nixpkgs.config.allowUnfree = true;
+            nixpkgs.overlays = [ self.overlays.default ];
+          }
+          
+          # Import our modules
+          ./modules
+          
+          # Main configuration
+          ./darwin-configuration.nix
+          
+          # Home Manager integration
+          home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "backup";
+              users.angel = import ./home.nix;
+            };
+          }
+        ];
+      };
+      
       # Intel macOS configuration
       "angel-intel" = darwin.lib.darwinSystem {
         system = "x86_64-darwin";
