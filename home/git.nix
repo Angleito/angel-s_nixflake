@@ -26,7 +26,7 @@ in
       # Sign commits with SSH key
       commit.gpgsign = true;
       gpg.format = "ssh";
-      user.signingkey = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
+      user.signingkey = "${config.home.homeDirectory}/.ssh/github";
       
       # SSH signature verification
       gpg.ssh.allowedSignersFile = "${config.home.homeDirectory}/.ssh/allowed_signers";
@@ -53,7 +53,7 @@ in
       Host github.com
         HostName github.com
         User git
-        IdentityFile ~/.ssh/id_ed25519
+      IdentityFile ~/.ssh/github
         AddKeysToAgent yes
         UseKeychain yes
     '';
