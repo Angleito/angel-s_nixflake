@@ -31,6 +31,11 @@ in
     wget
   ];
 
+  # Import modules
+  imports = [
+    ./modules/default.nix
+  ];
+
   # Module configurations
   development = {
     rust.enable = true;
@@ -48,11 +53,16 @@ in
       postgresql.version = "14";
     };
   };
-
+  
   # Program configurations
   programs = {
+    claude-code = {
+      enable = true;
+      configDir = "$HOME/.claude";
+      scriptsDir = "$HOME/.claude/scripts";
+      enableMcpServers = true;
+    };
     git-env.enable = true;
-    claude-code.enable = true;
     cursor.enable = true;
   };
 
