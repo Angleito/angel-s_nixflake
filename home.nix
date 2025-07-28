@@ -17,17 +17,7 @@ in
 {
   home.stateVersion = "25.05";
   
-  # User-specific Git configuration
-  programs.git = {
-    enable = true;
-    userName = "Angleito";
-    userEmail = "angelsoftworks@gmail.com";
-    
-    # Configure git to use SSH for github.com URLs
-    extraConfig = {
-      url."git@github.com:".insteadOf = "https://github.com/";
-    };
-  };
+  # Git configuration is handled in ./home/git.nix
   
   imports = [
     ./home/git.nix
@@ -75,8 +65,7 @@ in
     vivid           # LS_COLORS generator
     
     # Clipboard managers
-    pbcopy          # macOS clipboard access
-    pbpaste         # macOS clipboard access
+    # pbcopy and pbpaste are built-in macOS commands
     
     # Code formatting/linting
     shfmt           # Shell script formatter
@@ -167,7 +156,7 @@ in
     macchina        # Fast system info tool
     
     # CSV tools
-    xsv             # CSV toolkit
+    xan             # CSV toolkit (xsv replacement)
     
     # Modern Unix rewrites
     uutils-coreutils # Rust coreutils
