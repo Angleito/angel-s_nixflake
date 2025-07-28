@@ -457,12 +457,12 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
       command = "npx";
       args = [ "mcp-omnisearch" ];
       env = {
-        TAVILY_API_KEY = "\${TAVILY_API_KEY}";
-        BRAVE_API_KEY = "\${BRAVE_API_KEY}";
-        KAGI_API_KEY = "\${KAGI_API_KEY}";
-        PERPLEXITY_API_KEY = "\${PERPLEXITY_API_KEY}";
-        JINA_AI_API_KEY = "\${JINA_AI_API_KEY}";
-        FIRECRAWL_API_KEY = "\${FIRECRAWL_API_KEY}";
+        TAVILY_API_KEY = "$(TAVILY_API_KEY)";
+        BRAVE_API_KEY = "$(BRAVE_API_KEY)";
+        KAGI_API_KEY = "$(KAGI_API_KEY)";
+        PERPLEXITY_API_KEY = "$(PERPLEXITY_API_KEY)";
+        JINA_AI_API_KEY = "$(JINA_AI_API_KEY)";
+        FIRECRAWL_API_KEY = "$(FIRECRAWL_API_KEY)";
       };
     };
     claude-flow = {
@@ -478,6 +478,18 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
       env = {
         NODE_ENV = "production";
       };
+    };
+    sequential-thinking = {
+      command = "npx";
+      args = [ "@modelcontextprotocol/server-sequential-thinking" ];
+    };
+    memory = {
+      command = "npx";
+      args = [ "@modelcontextprotocol/server-memory" ];
+    };
+    filesystem = {
+      command = "npx";
+      args = [ "@modelcontextprotocol/server-filesystem" "/Users/angel/Projects" "/Users/angel/Documents" "/Users/angel/.claude" "/tmp" ];
     };
   };
 
@@ -506,6 +518,8 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
     maxFileSize = 1000000;
     contextWindow = 200000;
     model = "opus";
+    
+    mcpServers = lib.mkIf cfg.enableMcpServers mcpServers;
   };
 
 in {
@@ -533,10 +547,11 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Ensure Python packages are available for memory integration
+    # Ensure required packages are available
     environment.systemPackages = with pkgs; [
       python3
       python3Packages.pip
+      nodejs_20  # For npx and MCP servers
     ];
 
     # Create Claude Code configuration files
@@ -605,6 +620,27 @@ in {
         chmod 644 ${cfg.configDir}/settings.json
         chmod 644 ${cfg.configDir}/agents/*.md
         chmod 644 ${cfg.configDir}/commands/*.md
+        
+        # Install claude-flow if not already installed
+        if [ ! -d "/Users/angel/Projects/claude-flow" ]; then
+          echo "Installing claude-flow..."
+          cd /Users/angel/Projects
+          git clone https://github.com/Angleito/claude-flow.git || echo "Failed to clone claude-flow"
+          cd claude-flow
+          npm install || echo "Failed to install claude-flow dependencies"
+        else
+          echo "claude-flow already installed at /Users/angel/Projects/claude-flow"
+        fi
+        
+        # Install required MCP servers globally
+        echo "Installing MCP servers..."
+        npm install -g @modelcontextprotocol/server-filesystem \
+                       @modelcontextprotocol/server-memory \
+                       @modelcontextprotocol/server-sequential-thinking \
+                       @cloudflare/mcp-server-puppeteer \
+                       @michaeltliu/mcp-server-playwright \
+                       mcp-omnisearch \
+                       ruv-swarm || echo "Some MCP servers failed to install"
         
         echo "Claude Code configuration complete!"
       '';
