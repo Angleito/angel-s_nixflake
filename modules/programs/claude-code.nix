@@ -443,22 +443,19 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
     '';
   };
   
-  # MCP server configurations for Claude Code
+  # MCP server configurations for Claude Code CLI
   mcpServers = {
     puppeteer = {
-      type = "stdio";
       command = "npx";
-      args = [ "@puppeteer/mcp-server" ];
+      args = [ "-y" "@puppeteer/mcp-server" ];
     };
     playwright = {
-      type = "stdio";
       command = "npx";
-      args = [ "@michaeltliu/mcp-server-playwright" ];
+      args = [ "-y" "@michaeltliu/mcp-server-playwright" ];
     };
-    mcp-omnisearch = {
-      type = "stdio";
+    "mcp-omnisearch" = {
       command = "npx";
-      args = [ "mcp-omnisearch" ];
+      args = [ "-y" "mcp-omnisearch" ];
       env = {
         TAVILY_API_KEY = "\${TAVILY_API_KEY}";
         BRAVE_API_KEY = "\${BRAVE_API_KEY}";
@@ -468,36 +465,31 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
         FIRECRAWL_API_KEY = "\${FIRECRAWL_API_KEY}";
       };
     };
-    claude-flow = {
-      type = "stdio";
+    "claude-flow" = {
       command = "/Users/angel/Projects/claude-flow/bin/claude-flow";
       args = [ "mcp" "start" "--transport" "stdio" ];
       env = {
         NODE_ENV = "production";
       };
     };
-    ruv-swarm = {
-      type = "stdio";
+    "ruv-swarm" = {
       command = "npx";
-      args = [ "ruv-swarm" "mcp" "start" ];
+      args = [ "-y" "ruv-swarm" "mcp" "start" ];
       env = {
         NODE_ENV = "production";
       };
     };
-    sequential-thinking = {
-      type = "stdio";
+    "sequential-thinking" = {
       command = "npx";
-      args = [ "@modelcontextprotocol/server-sequential-thinking" ];
+      args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
     };
     memory = {
-      type = "stdio";
       command = "npx";
-      args = [ "@modelcontextprotocol/server-memory" ];
+      args = [ "-y" "@modelcontextprotocol/server-memory" ];
     };
     filesystem = {
-      type = "stdio";
       command = "npx";
-      args = [ "@modelcontextprotocol/server-filesystem" "/Users/angel/Projects" "/Users/angel/Documents" "/Users/angel/.claude" "/tmp" ];
+      args = [ "-y" "@modelcontextprotocol/server-filesystem" "/Users/angel/Projects" "/Users/angel/Documents" "/Users/angel/.claude" "/tmp" ];
     };
   };
 
@@ -543,6 +535,7 @@ in {
       python3
       python3Packages.pip
       nodejs_20  # For npx and MCP servers
+      jq         # For updating JSON configuration
     ];
 
     # Create Claude Code configuration files
@@ -563,10 +556,34 @@ in {
         mkdir -p ${cfg.configDir}/ide
         mkdir -p ${cfg.scriptsDir}
         
-        # Create settings.json
+        # Create settings.json for Claude Code CLI
         cat > ${cfg.configDir}/settings.json << 'EOF'
         ${builtins.toJSON claudeSettings}
         EOF
+        
+        # Update claude.json to add MCP servers to projects
+        # This preserves existing configuration while adding MCP servers
+        if [ -f "$HOME/.claude.json" ]; then
+          # Use jq to update the existing file, preserving all other settings
+          jq '.projects["/Users/angel/Projects"].mcpServers = ${builtins.toJSON mcpServers} | 
+              .projects["/Users/angel/Projects/nix-project"].mcpServers = ${builtins.toJSON mcpServers}' \
+              "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
+              mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
+        else
+          # Create new file if it doesn't exist
+          cat > $HOME/.claude.json << 'EOF'
+          {
+            "projects": {
+              "/Users/angel/Projects": {
+                "mcpServers": ${builtins.toJSON mcpServers}
+              },
+              "/Users/angel/Projects/nix-project": {
+                "mcpServers": ${builtins.toJSON mcpServers}
+              }
+            }
+          }
+          EOF
+        fi
         
         # Create agent files
         ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: content: ''
