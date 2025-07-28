@@ -120,6 +120,20 @@ cat > "$MAIN_CONFIG" << EOF
         "JINA_AI_API_KEY": "${JINA_AI_API_KEY:-}",
         "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY:-}"
       }
+    },
+    "claude-flow": {
+      "command": "/Users/$USER/Projects/claude-flow/bin/claude-flow",
+      "args": ["mcp", "start", "--transport", "stdio"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "ruv-swarm": {
+      "command": "npx",
+      "args": ["-y", "ruv-swarm", "mcp", "start"],
+      "env": {
+        "NODE_ENV": "production"
+      }
     }
   },
   "projects": {}

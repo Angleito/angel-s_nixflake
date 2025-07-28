@@ -123,6 +123,7 @@ in
       
       # Claude CLI
       claude = "/Users/angel/.npm-global/bin/claude";
+      ccr = "ccr code --dangerously-skip-permissions";
     };
     
     initContent = ''

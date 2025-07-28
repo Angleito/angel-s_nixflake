@@ -25,6 +25,20 @@ let
         FIRECRAWL_API_KEY = "\${FIRECRAWL_API_KEY}";
       };
     };
+    claude-flow = {
+      command = "/Users/angel/Projects/claude-flow/bin/claude-flow";
+      args = [ "mcp" "start" "--transport" "stdio" ];
+      env = {
+        NODE_ENV = "production";
+      };
+    };
+    ruv-swarm = {
+      command = "npx";
+      args = [ "ruv-swarm" "mcp" "start" ];
+      env = {
+        NODE_ENV = "production";
+      };
+    };
   };
 
   # Memory integration scripts
