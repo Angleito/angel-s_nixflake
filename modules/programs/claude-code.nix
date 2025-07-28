@@ -446,26 +446,30 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
   # MCP server configurations for Claude Code
   mcpServers = {
     puppeteer = {
+      type = "stdio";
       command = "npx";
       args = [ "@puppeteer/mcp-server" ];
     };
     playwright = {
+      type = "stdio";
       command = "npx";
       args = [ "@michaeltliu/mcp-server-playwright" ];
     };
     mcp-omnisearch = {
+      type = "stdio";
       command = "npx";
       args = [ "mcp-omnisearch" ];
       env = {
-        TAVILY_API_KEY = "$(TAVILY_API_KEY)";
-        BRAVE_API_KEY = "$(BRAVE_API_KEY)";
-        KAGI_API_KEY = "$(KAGI_API_KEY)";
-        PERPLEXITY_API_KEY = "$(PERPLEXITY_API_KEY)";
-        JINA_AI_API_KEY = "$(JINA_AI_API_KEY)";
-        FIRECRAWL_API_KEY = "$(FIRECRAWL_API_KEY)";
+        TAVILY_API_KEY = "\${TAVILY_API_KEY}";
+        BRAVE_API_KEY = "\${BRAVE_API_KEY}";
+        KAGI_API_KEY = "\${KAGI_API_KEY}";
+        PERPLEXITY_API_KEY = "\${PERPLEXITY_API_KEY}";
+        JINA_AI_API_KEY = "\${JINA_AI_API_KEY}";
+        FIRECRAWL_API_KEY = "\${FIRECRAWL_API_KEY}";
       };
     };
     claude-flow = {
+      type = "stdio";
       command = "/Users/angel/Projects/claude-flow/bin/claude-flow";
       args = [ "mcp" "start" "--transport" "stdio" ];
       env = {
@@ -473,6 +477,7 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
       };
     };
     ruv-swarm = {
+      type = "stdio";
       command = "npx";
       args = [ "ruv-swarm" "mcp" "start" ];
       env = {
@@ -480,14 +485,17 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
       };
     };
     sequential-thinking = {
+      type = "stdio";
       command = "npx";
       args = [ "@modelcontextprotocol/server-sequential-thinking" ];
     };
     memory = {
+      type = "stdio";
       command = "npx";
       args = [ "@modelcontextprotocol/server-memory" ];
     };
     filesystem = {
+      type = "stdio";
       command = "npx";
       args = [ "@modelcontextprotocol/server-filesystem" "/Users/angel/Projects" "/Users/angel/Documents" "/Users/angel/.claude" "/tmp" ];
     };
@@ -501,23 +509,6 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
       DISABLE_ERROR_REPORTING = "1";
       ANTHROPIC_API_KEY = "";
     };
-    
-    allowedTools = [
-      "Task"
-      "Bash(git:*)"
-      "Bash(npm:*)"
-      "Glob"
-      "Grep"
-      "Read"
-      "Edit"
-      "MultiEdit"
-      "Write"
-      "WebFetch"
-    ];
-    
-    maxFileSize = 1000000;
-    contextWindow = 200000;
-    model = "opus";
     
     mcpServers = lib.mkIf cfg.enableMcpServers mcpServers;
   };
@@ -611,7 +602,7 @@ in {
         fi
         
         # Execute Claude Code with all arguments
-        exec claude-code "$@"
+        exec claude "$@"
         EOF
         chmod +x ${cfg.configDir}/claude-wrapper.sh
         
