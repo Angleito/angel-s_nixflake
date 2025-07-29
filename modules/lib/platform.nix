@@ -35,7 +35,7 @@
       default ? null
     }: 
       if pkgs.stdenv.isDarwin then darwin
-      else if (pkgs.stdenv.isLinux && builtins.pathExists /etc/nixos) then (nixos or linux)
+      else if (pkgs.stdenv.isLinux && builtins.pathExists /etc/nixos) then (if nixos != null then nixos else linux)
       else if pkgs.stdenv.isLinux then linux
       else default;
   };
