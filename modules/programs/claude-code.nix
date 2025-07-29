@@ -561,12 +561,12 @@ in {
         ${builtins.toJSON claudeSettings}
         EOF
         
-        # Update claude.json to add MCP servers to home directory for global access
+        # Update claude.json to add MCP servers to nix-project
         # This preserves existing configuration while adding MCP servers
         if [ -f "$HOME/.claude.json" ]; then
           # Use jq to update the existing file, preserving all other settings
-          # Add to home directory for global access
-          jq '.projects["/Users/angel"].mcpServers = ${builtins.toJSON mcpServers}' \
+          # Add to nix-project for proper MCP server configuration
+          jq '.projects["/Users/angel/Projects/nix-project"].mcpServers = ${builtins.toJSON mcpServers}' \
               "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
               mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
         else
@@ -574,7 +574,7 @@ in {
           cat > $HOME/.claude.json << 'EOF'
           {
             "projects": {
-              "/Users/angel": {
+              "/Users/angel/Projects/nix-project": {
                 "mcpServers": ${builtins.toJSON mcpServers}
               }
             }
