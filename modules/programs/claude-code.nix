@@ -495,18 +495,14 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
 
 
   # Claude Code settings configuration
-  # Note: settings.json should only contain env and mcpServers fields
-  # MCP servers in settings.json need type field, unlike in .claude.json
+  # Note: settings.json should only contain valid fields like env
+  # MCP servers should be configured in ~/.claude.json for Claude Code CLI
   claudeSettings = {
     env = {
       DISABLE_TELEMETRY = "1";
       DISABLE_ERROR_REPORTING = "1";
       ANTHROPIC_API_KEY = "";
     };
-    
-    mcpServers = lib.mkIf cfg.enableMcpServers (lib.mapAttrs (name: server: 
-      server // { type = "stdio"; }
-    ) mcpServers);
   };
 
 in {
@@ -565,12 +561,12 @@ in {
         ${builtins.toJSON claudeSettings}
         EOF
         
-        # Update claude.json to add MCP servers to projects
+        # Update claude.json to add MCP servers to home directory for global access
         # This preserves existing configuration while adding MCP servers
         if [ -f "$HOME/.claude.json" ]; then
           # Use jq to update the existing file, preserving all other settings
-          jq '.projects["/Users/angel/Projects"].mcpServers = ${builtins.toJSON mcpServers} | 
-              .projects["/Users/angel/Projects/nix-project"].mcpServers = ${builtins.toJSON mcpServers}' \
+          # Add to home directory for global access
+          jq '.projects["/Users/angel"].mcpServers = ${builtins.toJSON mcpServers}' \
               "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
               mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
         else
@@ -578,10 +574,7 @@ in {
           cat > $HOME/.claude.json << 'EOF'
           {
             "projects": {
-              "/Users/angel/Projects": {
-                "mcpServers": ${builtins.toJSON mcpServers}
-              },
-              "/Users/angel/Projects/nix-project": {
+              "/Users/angel": {
                 "mcpServers": ${builtins.toJSON mcpServers}
               }
             }
@@ -658,9 +651,7 @@ in {
       '';
     };
     
-    # Add claude wrapper to PATH via shell alias
-    environment.shellAliases = {
-      claude = "${cfg.configDir}/claude-wrapper.sh";
-    };
+    # Claude is already available via npm global install
+    # No need to add wrapper alias
   };
 }

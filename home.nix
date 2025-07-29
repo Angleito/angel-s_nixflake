@@ -218,9 +218,6 @@ in
     # Misc
     weather = "curl wttr.in";
     cheat = "curl cheat.sh/";
-    
-    # Claude CLI
-    claude = "/Users/angel/.npm-global/bin/claude";
   };
 
   # Add local bin to PATH (npm global no longer needed since claude-code is from nix)
