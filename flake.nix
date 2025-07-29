@@ -214,6 +214,77 @@
             echo "🎉 Your development environment is ready to use!"
           '');
         };
+      } // pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+        # NixOS-specific deployment helper
+        deploy = {
+          type = "app";
+          program = toString (pkgs.writeShellScript "deploy" ''
+            set -euo pipefail
+            echo "🔄 Deploying NixOS configuration..."
+            
+            # Detect hostname to choose right configuration
+            HOSTNAME=$(hostname)
+            CONFIG_NAME=""
+            
+            case "$HOSTNAME" in
+              *arm*|*aarch64*)
+                CONFIG_NAME="angel-nixos-arm"
+                ;;
+              *)
+                CONFIG_NAME="angel-nixos"
+                ;;
+            esac
+            
+            echo "📦 Using configuration: $CONFIG_NAME"
+            sudo nixos-rebuild switch --flake ".#$CONFIG_NAME"
+            echo "✅ NixOS deployment complete!"
+          '');
+        };
+        
+        # NixOS-specific installation helper
+        install = {
+          type = "app";
+          program = toString (pkgs.writeShellScript "install" ''
+            set -euo pipefail
+            
+            echo "🚀 Installing Angel's NixOS Configuration"
+            echo ""
+            
+            # Check if we're on NixOS
+            if [[ ! -f /etc/nixos/configuration.nix ]]; then
+                echo "❌ This doesn't appear to be a NixOS system."
+                echo "   Please install NixOS first."
+                exit 1
+            fi
+            
+            # Generate hardware configuration if it doesn't exist
+            if [[ ! -f ./hardware-configuration.nix ]]; then
+                echo "🔧 Generating hardware configuration..."
+                sudo nixos-generate-config --show-hardware-config > hardware-configuration.nix
+                echo "✅ Hardware configuration generated"
+                echo "⚠️  Please review hardware-configuration.nix and adjust if needed"
+            fi
+            
+            # Deploy configuration
+            ${self.apps.${system}.deploy.program}
+          '');
+        };
+        
+        # System info helper
+        system-info = {
+          type = "app";
+          program = toString (pkgs.writeShellScript "system-info" ''
+            echo "🖥️  NixOS System Information"
+            echo "=========================="
+            echo "Hostname: $(hostname)"
+            echo "Kernel: $(uname -r)"
+            echo "Architecture: $(uname -m)"
+            echo "NixOS Version: $(nixos-version)"
+            echo "CPU: $(lscpu | grep "Model name" | cut -d: -f2 | xargs)"
+            echo "Memory: $(free -h | grep "^Mem:" | awk '{print $2}')"
+            echo ""
+          '');
+        };
       }
     );
     
@@ -304,6 +375,67 @@
           
           # Home Manager integration
           home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "backup";
+              users.angel = import ./home.nix;
+            };
+          }
+        ];
+      };
+    };
+    
+    # NixOS configurations for Linux systems
+    nixosConfigurations = {
+      # Main NixOS configuration
+      "angel-nixos" = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux"; # Change to aarch64-linux for ARM
+        
+        specialArgs = { inherit self; };
+        
+        modules = [
+          # Allow unfree packages
+          {
+            nixpkgs.config.allowUnfree = true;
+            nixpkgs.overlays = [ self.overlays.default ];
+          }
+          
+          # Main configuration
+          ./nixos-configuration.nix
+          
+          # Home Manager integration
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "backup";
+              users.angel = import ./home.nix;
+            };
+          }
+        ];
+      };
+      
+      # ARM Linux configuration (for ARM workstations)
+      "angel-nixos-arm" = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        
+        specialArgs = { inherit self; };
+        
+        modules = [
+          # Allow unfree packages
+          {
+            nixpkgs.config.allowUnfree = true;
+            nixpkgs.overlays = [ self.overlays.default ];
+          }
+          
+          # Main configuration
+          ./nixos-configuration.nix
+          
+          # Home Manager integration
+          home-manager.nixosModules.home-manager
           {
             home-manager = {
               useGlobalPkgs = true;

@@ -5,14 +5,29 @@ set -euo pipefail
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}🔄 Nix Darwin Rebuild Script${NC}"
+# Detect platform
+PLATFORM=""
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    PLATFORM="darwin"
+elif [[ -f /etc/nixos/configuration.nix ]] || [[ -f /etc/NIXOS ]]; then
+    PLATFORM="nixos"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    PLATFORM="linux"
+else
+    echo -e "${RED}❌ Unsupported platform: $OSTYPE${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}🔄 Nix Configuration Rebuild Script${NC}"
+echo -e "${BLUE}📦 Platform: $PLATFORM${NC}"
 echo ""
 
 # Source .env file if it exists
 ENV_FILES=(
-    "/Users/angel/Projects/nix-project/.env"
+    "$(pwd)/.env"
     "$HOME/.config/nix-project/.env"
     "$HOME/.env"
     "./.env"
@@ -51,16 +66,43 @@ fi
 
 echo ""
 
-# Run darwin-rebuild with environment variables
-echo -e "${GREEN}🚀 Running darwin-rebuild switch...${NC}"
+# Run platform-specific rebuild command
+echo -e "${GREEN}🚀 Running rebuild...${NC}"
 echo ""
 
-# Export variables explicitly for the darwin-rebuild command
+# Export variables explicitly for the rebuild command
 export GIT_NAME="${GIT_NAME:-}"
 export GIT_EMAIL="${GIT_EMAIL:-}"
 
-# Run the command with sudo, preserving environment variables
-sudo -E darwin-rebuild switch --flake ".#angel" "$@"
+# Run the appropriate rebuild command based on platform
+case "$PLATFORM" in
+    darwin)
+        # Detect configuration name (default to "angel")
+        CONFIG_NAME="${NIX_CONFIG_NAME:-angel}"
+        echo -e "${BLUE}🍎 Using Darwin configuration: $CONFIG_NAME${NC}"
+        sudo -E darwin-rebuild switch --flake ".#$CONFIG_NAME" "$@"
+        ;;
+    nixos)
+        # Detect hostname for configuration selection
+        HOSTNAME=$(hostname)
+        CONFIG_NAME=""
+        
+        # Check for ARM architecture
+        if [[ "$(uname -m)" == "aarch64" ]] || [[ "$HOSTNAME" == *"arm"* ]]; then
+            CONFIG_NAME="${NIX_CONFIG_NAME:-angel-nixos-arm}"
+        else
+            CONFIG_NAME="${NIX_CONFIG_NAME:-angel-nixos}"
+        fi
+        
+        echo -e "${BLUE}🐧 Using NixOS configuration: $CONFIG_NAME${NC}"
+        sudo nixos-rebuild switch --flake ".#$CONFIG_NAME" "$@"
+        ;;
+    linux)
+        echo -e "${RED}❌ Non-NixOS Linux detected. This configuration requires NixOS.${NC}"
+        echo "Please install NixOS first or use home-manager standalone."
+        exit 1
+        ;;
+esac
 
 echo ""
 echo -e "${GREEN}✅ Rebuild complete!${NC}"
