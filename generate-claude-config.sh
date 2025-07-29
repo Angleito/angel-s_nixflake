@@ -70,7 +70,7 @@ elif [ -f "$HOME/.env" ]; then
 fi
 
 # Create directories
-mkdir -p ~/.claude/commands/frontend ~/.claude/commands/backend ~/.local/bin
+mkdir -p ~/.claude/commands ~/.local/bin
 
 # Generate main configuration with environment variables
 # Validate JSON and create backup before writing
@@ -394,135 +394,112 @@ EOF
 cat > ~/.claude/commands/workflow.md << 'EOF'
 ---
 allowed-tools: Task, TodoRead, TodoWrite, Read, Grep, Bash(git:*), Bash(npm:*)
-description: Orchestrate parallel Task agents for large workflows
+description: Orchestrate parallel Task agents using custom sub-agents
 ---
 
-# Parallel Workflow Orchestrator
+# Workflow Orchestrator with Custom Sub-Agents
 
-Execute large workflows using parallel Task tool sub-agents with intelligent batching and coordination.
+Execute workflows using custom sub-agents from ~/.claude/agents/ with intelligent task distribution and coordination.
 
 ## Workflow: $ARGUMENTS
 
+## Available Custom Sub-Agents
+
+The following specialized agents are available from ~/.claude/agents/:
+- **code-cleanup-specialist**: Identifies and eliminates code redundancy, removes unused files, detects duplicated patterns
+- **code-reviewer**: Reviews code for DRY/KISS principles, identifies duplication, assesses complexity
+- **coding-teacher**: Helps understand code patterns, debug issues through guided discovery
+- **deep-research-specialist**: Conducts comprehensive multi-source research on complex topics
+- **pair-programmer**: Collaborative problem-solving, explores multiple solution approaches
+- **strategic-planner**: Creates comprehensive plans for complex projects and initiatives
+
 ## Execution Strategy
 
-### Phase 1: Task Analysis and Planning
-First, I'll analyze the requested workflow and break it down into:
-- **Independent tasks**: Can be executed in parallel without conflicts
-- **Sequential dependencies**: Must be executed in order
-- **Resource-intensive tasks**: Should be limited per batch
+### Phase 1: Task Analysis with Strategic Planner
+Use the strategic-planner agent to:
+- Analyze the complete workflow request
+- Break down into subtasks suitable for specific agents
+- Identify dependencies and parallelization opportunities
+- Create a comprehensive execution plan
 
-### Phase 2: Batch Orchestration
-Execute tasks in optimized batches:
-- **Batch size**: Maximum 10 parallel agents per batch
-- **Collision prevention**: Each agent works on specific files/directories
-- **Progress tracking**: Monitor completion via TodoRead/TodoWrite
+### Phase 2: Research Phase (if needed)
+Deploy deep-research-specialist for:
+- Gathering best practices and patterns
+- Understanding complex technical requirements
+- Finding existing solutions to adapt
+- Validating architectural decisions
 
-### Phase 3: Task Agent Instructions
-Each Task agent will receive:
-1. **Specific scope**: Clear boundaries (files/directories to work on)
-2. **Isolation requirements**: Avoid modifying shared resources
-3. **Output format**: Structured results for aggregation
-4. **Error handling**: Report failures without blocking other agents
+### Phase 3: Parallel Task Distribution
+Assign tasks to appropriate custom agents:
+- **Maximum 5-8 agents per batch** (based on task complexity)
+- **Agent selection based on task type**:
+  - Code modifications → pair-programmer
+  - Cleanup tasks → code-cleanup-specialist
+  - Quality checks → code-reviewer
+  - Learning/debugging → coding-teacher
+  - Complex planning → strategic-planner
+  - Research needs → deep-research-specialist
 
-### Phase 4: Synchronization Points
-Between batches:
-- **Verify completion**: Check all agents finished successfully
-- **Resolve conflicts**: Handle any file conflicts if they arise
-- **Update progress**: Mark todos as completed
-- **Plan next batch**: Based on dependencies and results
+### Phase 4: Task Agent Execution
+Each custom agent will:
+1. **Load from ~/.claude/agents/[agent-name].md**
+2. **Execute with specific task parameters**
+3. **Follow agent-specific methodologies**
+4. **Return structured results**
 
-## Example Workflow Breakdown
+### Phase 5: Coordination and Integration
+Between agent batches:
+- Verify all agents completed successfully
+- Integrate results from different agents
+- Update progress tracking
+- Plan subsequent batches based on results
 
-For a request like "Refactor all components to use TypeScript":
-1. **Batch 1**: Analyze and list all components (1 agent)
-2. **Batch 2**: Convert simple components (10 agents, 1 per component)
-3. **Batch 3**: Convert complex components (5 agents for resource-intensive work)
-4. **Batch 4**: Update imports and tests (10 agents for different modules)
-5. **Batch 5**: Final verification and cleanup (1 agent)
+## Example Workflow Execution
+
+For "Refactor codebase to improve performance":
+1. **strategic-planner**: Create comprehensive refactoring plan
+2. **deep-research-specialist**: Research performance optimization patterns
+3. **Parallel execution**:
+   - **code-cleanup-specialist**: Identify redundant code
+   - **pair-programmer** (multiple): Refactor different modules
+   - **code-reviewer**: Validate changes against best practices
+4. **coding-teacher**: Document complex changes for team understanding
+
+## Custom Agent Integration
+
+When spawning Task agents:
+```
+Task(
+  subagent_type="[agent-type]",
+  description="[specific task]",
+  prompt="Use the methodology from ~/.claude/agents/[agent-name].md to [specific task details]"
+)
+```
 
 ## Coordination Rules
 
-1. **File locking**: Agents declare which files they'll modify upfront
-2. **Directory isolation**: Prefer agents working in separate directories
-3. **Merge strategy**: Later batches handle integration of earlier work
-4. **Rollback capability**: Each batch creates a checkpoint
+1. **Agent specialization**: Match tasks to agent expertise
+2. **Resource management**: Limit concurrent agents based on complexity
+3. **Result aggregation**: Combine outputs from specialized agents
+4. **Quality gates**: Use code-reviewer for validation checkpoints
 
-## Progress Reporting
+## Progress Tracking
 
-Regular updates will include:
-- Current batch number and size
-- Completed vs pending tasks
-- Any failures or conflicts
-- Estimated remaining time
+- Track which custom agents are active
+- Monitor agent-specific progress
+- Aggregate results by agent type
+- Report specialized insights from each agent
 
-## Failure Handling
+## Benefits of Custom Sub-Agents
 
-If any agent fails:
-1. Continue with other agents in the batch
-2. Collect all failure reports
-3. Attempt retry with adjusted strategy
-4. Report unrecoverable failures to user
+1. **Specialized expertise**: Each agent has focused capabilities
+2. **Consistent methodology**: Agents follow predefined approaches
+3. **Better results**: Task-specific agents produce higher quality outputs
+4. **Efficient execution**: Right agent for the right job
 
-This orchestrator ensures efficient parallel execution while maintaining code quality and preventing conflicts between concurrent operations.
+This orchestrator leverages the specialized capabilities of custom sub-agents to deliver superior results through intelligent task distribution and coordination.
 EOF
 
-cat > ~/.claude/commands/frontend/component.md << 'EOF'
----
-allowed-tools: Read, Edit, Write, Bash(npm:*)
-description: Generate React/Vue component with TypeScript
----
-
-# Component Generator
-
-Create a new frontend component with the following specifications:
-
-## Component Details
-- **Component name**: $ARGUMENTS
-- **Use TypeScript** with proper typing
-- **Include styling** (CSS modules, styled-components, or framework-specific)
-- **Add proper prop validation**
-- **Include basic unit tests**
-- **Follow project style guide** as outlined in @README.md or @CONTRIBUTING.md
-
-## File Structure
-Create the component in the appropriate directory based on project structure:
-- Check existing components for patterns
-- Follow naming conventions
-- Include index file if needed
-
-## Additional Context
-- **Current project structure**: !`find src -name "*.tsx" -o -name "*.vue" | head -10`
-- **Package.json dependencies**: !`grep -E "react|vue|typescript" package.json`
-EOF
-
-cat > ~/.claude/commands/backend/api.md << 'EOF'
----
-allowed-tools: Read, Edit, Write, Bash(npm:*), Bash(git:*)
-description: Generate API endpoint with proper validation and testing
----
-
-# API Endpoint Generator
-
-Create a new API endpoint with the following specifications:
-
-## Endpoint Details
-- **Endpoint name**: $ARGUMENTS
-- **Include input validation** (joi, yup, or similar)
-- **Add proper error handling**
-- **Include authentication/authorization** if needed
-- **Add comprehensive unit tests**
-- **Follow REST/GraphQL conventions**
-
-## Context Files
-- **Current API structure**: !`find . -name "*.js" -o -name "*.ts" | grep -E "(api|routes|controllers)" | head -10`
-- **Database models**: Check @models/ or @schemas/ directory
-- **Authentication setup**: Check @auth/ or @middleware/ directory
-
-## Requirements
-- Follow existing code patterns
-- Include proper documentation
-- Add to API documentation if it exists
-EOF
 
 # Final validation check
 echo "🔍 Performing final validation check..."
@@ -579,9 +556,7 @@ echo "  /user:optimize        - Code performance analysis"
 echo "  /user:deploy          - Smart deployment with checks"
 echo "  /user:debug           - Systematic debugging"
 echo "  /user:research        - Multi-source research using omnisearch"
-echo "  /user:workflow        - Orchestrate parallel Task agents for large workflows"
-echo "  /user:frontend:component - React/Vue component generator"
-echo "  /user:backend:api     - API endpoint generator"
+echo "  /user:workflow        - Orchestrate parallel Task agents using custom sub-agents"
 echo ""
 echo "🚀 Start Claude Code with: claude"
 echo "   (Configured to bypass permissions for development environments)"
