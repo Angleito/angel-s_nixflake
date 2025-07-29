@@ -615,16 +615,8 @@ in {
           echo "claude-flow already installed at /Users/angel/Projects/claude-flow"
         fi
         
-        # Install Claude Code CLI globally (always latest version)
-        echo "Installing Claude Code CLI..."
-        # First uninstall any existing version
-        npm uninstall -g @anthropic-ai/claude-code 2>/dev/null || true
-        # Clear npm cache to ensure we get the latest
-        npm cache clean --force
-        # Update npm registry cache
-        npm cache verify
-        # Force install the latest version
-        npm install -g @anthropic-ai/claude-code@latest --force --registry https://registry.npmjs.org || echo "Failed to install Claude Code"
+        # Claude Code is now installed via nix package
+        echo "Claude Code CLI is installed via nix package"
         
         # Install required MCP servers globally (always latest versions)
         echo "Installing MCP servers..."

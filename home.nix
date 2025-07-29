@@ -222,15 +222,14 @@ in
     weather = "curl wttr.in";
     cheat = "curl cheat.sh/";
     
-    # Claude alias to use npm global installation with skip permissions
-    claude = "$HOME/.npm-global/bin/claude --dangerously-skip-permissions";
+    # Claude alias removed - using nix package
   };
 
   # Add local bin to PATH
   home.sessionPath = [
     "$HOME/.local/bin"
     "$HOME/.cargo/bin"
-    "$HOME/.npm-global/bin"  # For Claude Code and global npm packages
+    "$HOME/.npm-global/bin"  # For global npm packages
   ];
 
   # Main Claude configuration using Nix builtins.toJSON
@@ -277,21 +276,8 @@ in
       $NPM_PATH config set prefix "$HOME/.npm-global"
       export PATH="$HOME/.npm-global/bin:$PATH"
       
-      # Install Claude Code CLI (latest version)
-      echo "Installing Claude Code CLI..."
-      # First uninstall any existing version
-      $NPM_PATH uninstall -g @anthropic-ai/claude-code 2>/dev/null || true
-      # Clear npm cache to ensure we get the latest
-      $NPM_PATH cache clean --force
-      # Update npm registry cache
-      $NPM_PATH cache verify
-      # Force install the latest version
-      $NPM_PATH install -g @anthropic-ai/claude-code@latest --force --registry https://registry.npmjs.org || echo "Failed to install Claude Code"
-      
-      # Check installed version
-      if [ -f "$HOME/.npm-global/bin/claude" ]; then
-        echo "Claude Code installed version: $($HOME/.npm-global/bin/claude --version 2>/dev/null || echo 'unknown')"
-      fi
+      # Claude Code is now installed via nix package
+      echo "Claude Code CLI is installed via nix package"
     else
       echo "npm not found, skipping Claude Code installation"
     fi

@@ -29,6 +29,7 @@ in
     git
     curl
     wget
+    claude-code  # Latest Claude Code CLI
   ];
 
   # Import modules
