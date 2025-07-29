@@ -561,23 +561,19 @@ in {
         ${builtins.toJSON claudeSettings}
         EOF
         
-        # Update claude.json to add MCP servers to nix-project
+        # Update claude.json to add MCP servers globally
         # This preserves existing configuration while adding MCP servers
         if [ -f "$HOME/.claude.json" ]; then
           # Use jq to update the existing file, preserving all other settings
-          # Add to nix-project for proper MCP server configuration
-          jq '.projects["/Users/angel/Projects/nix-project"].mcpServers = ${builtins.toJSON mcpServers}' \
+          # Add MCP servers globally for all projects
+          jq '.mcpServers = ${builtins.toJSON mcpServers}' \
               "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
               mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
         else
           # Create new file if it doesn't exist
           cat > $HOME/.claude.json << 'EOF'
           {
-            "projects": {
-              "/Users/angel/Projects/nix-project": {
-                "mcpServers": ${builtins.toJSON mcpServers}
-              }
-            }
+            "mcpServers": ${builtins.toJSON mcpServers}
           }
           EOF
         fi
@@ -596,29 +592,11 @@ in {
           COMMAND_EOF
         '') commands)}
         
-        # Create Claude wrapper script
-        cat > ${cfg.configDir}/claude-wrapper.sh << 'EOF'
-        #!/bin/bash
-        # Claude Code wrapper with environment loading
-        
-        # Source environment files in order of precedence
-        for env_file in ~/.env ~/Projects/nix-project/.env ~/config/.env; do
-          if [ -f "$env_file" ]; then
-            set -a
-            source "$env_file"
-            set +a
-          fi
-        done
-        
-        # Bypass macOS gatekeeper if needed
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-          export CLAUDE_CODE_BYPASS_GATEKEEPER=1
-        fi
-        
-        # Execute Claude Code with all arguments
-        exec claude "$@"
-        EOF
-        chmod +x ${cfg.configDir}/claude-wrapper.sh
+        # Configure npm for global installations
+        echo "Configuring npm..."
+        mkdir -p "$HOME/.npm-global"
+        npm config set prefix "$HOME/.npm-global"
+        export PATH="$HOME/.npm-global/bin:$PATH"
         
         # Set proper permissions
         chmod -R 755 ${cfg.configDir}
@@ -636,6 +614,10 @@ in {
         else
           echo "claude-flow already installed at /Users/angel/Projects/claude-flow"
         fi
+        
+        # Install Claude Code CLI globally (always latest version)
+        echo "Installing Claude Code CLI..."
+        npm install -g @anthropic-ai/claude-code || echo "Failed to install Claude Code"
         
         # Install required MCP servers globally
         echo "Installing MCP servers..."

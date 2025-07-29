@@ -218,12 +218,16 @@ in
     # Misc
     weather = "curl wttr.in";
     cheat = "curl cheat.sh/";
+    
+    # Claude alias to use npm global installation with skip permissions
+    claude = "$HOME/.npm-global/bin/claude --dangerously-skip-permissions";
   };
 
-  # Add local bin to PATH (npm global no longer needed since claude-code is from nix)
+  # Add local bin to PATH
   home.sessionPath = [
     "$HOME/.local/bin"
     "$HOME/.cargo/bin"
+    "$HOME/.npm-global/bin"  # For Claude Code and global npm packages
   ];
 
   # Main Claude configuration using Nix builtins.toJSON
