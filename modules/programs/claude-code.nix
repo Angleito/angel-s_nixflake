@@ -495,6 +495,8 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
 
 
   # Claude Code settings configuration
+  # Note: settings.json should only contain env and mcpServers fields
+  # MCP servers in settings.json need type field, unlike in .claude.json
   claudeSettings = {
     env = {
       DISABLE_TELEMETRY = "1";
@@ -502,7 +504,9 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
       ANTHROPIC_API_KEY = "";
     };
     
-    mcpServers = lib.mkIf cfg.enableMcpServers mcpServers;
+    mcpServers = lib.mkIf cfg.enableMcpServers (lib.mapAttrs (name: server: 
+      server // { type = "stdio"; }
+    ) mcpServers);
   };
 
 in {
