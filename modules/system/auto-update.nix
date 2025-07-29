@@ -95,7 +95,52 @@ in
     # Create launchd service for automatic updates
     launchd.agents.update-packages = {
       script = ''
-        ${pkgs.bash}/bin/bash -c "${config.environment.systemPackages}/bin/update-all-packages"
+        export PATH="${pkgs.nodejs_20}/bin:${pkgs.python3}/bin:${pkgs.ruby}/bin:$PATH"
+        
+        # Update Homebrew and all packages
+        if command -v brew &> /dev/null; then
+          echo "📦 Updating Homebrew..."
+          brew update
+          brew upgrade --greedy
+          brew cleanup
+          echo "✅ Homebrew updated"
+        fi
+        
+        # Update npm packages globally
+        if command -v npm &> /dev/null; then
+          echo "📦 Updating npm packages..."
+          npm install -g npm@latest
+          npm update -g
+          npm cache clean --force
+          echo "✅ npm packages updated"
+        fi
+        
+        # Update cargo packages
+        if command -v cargo &> /dev/null; then
+          echo "📦 Updating cargo packages..."
+          cargo install cargo-update 2>/dev/null || true
+          cargo install-update -a
+          echo "✅ Cargo packages updated"
+        fi
+        
+        # Update pip packages
+        if command -v pip3 &> /dev/null; then
+          echo "📦 Updating pip packages..."
+          pip3 install --upgrade pip
+          pip3 list --outdated --format=json | python3 -c "import json, sys; print('\n'.join([x['name'] for x in json.load(sys.stdin)]))" | xargs -n1 pip3 install -U 2>/dev/null || true
+          echo "✅ pip packages updated"
+        fi
+        
+        # Update gem packages
+        if command -v gem &> /dev/null; then
+          echo "📦 Updating gem packages..."
+          gem update --system
+          gem update
+          gem cleanup
+          echo "✅ gem packages updated"
+        fi
+        
+        echo "✨ All package managers updated!"
       '';
       
       serviceConfig = {
