@@ -617,7 +617,9 @@ in {
         
         # Install Claude Code CLI globally (always latest version)
         echo "Installing Claude Code CLI..."
-        npm install -g @anthropic-ai/claude-code || echo "Failed to install Claude Code"
+        # Clear npm cache to ensure we get the latest
+        npm cache clean --force
+        npm install -g @anthropic-ai/claude-code@latest --force || echo "Failed to install Claude Code"
         
         # Install required MCP servers globally
         echo "Installing MCP servers..."

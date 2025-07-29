@@ -279,6 +279,8 @@ in
       
       # Install Claude Code CLI (latest version)
       echo "Installing Claude Code CLI..."
+      # Clear npm cache to ensure we get the latest
+      $NPM_PATH cache clean --force
       # Force update to latest version
       $NPM_PATH install -g @anthropic-ai/claude-code@latest --force || echo "Failed to install Claude Code"
       
