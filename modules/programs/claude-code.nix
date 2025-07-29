@@ -7,15 +7,42 @@ let
   commands = {
     "workflow.md" = ''
 ---
-allowed-tools: Task, TodoRead, TodoWrite, Read, Grep, Bash(git:*), Bash(npm:*), WebFetch, mcp__claude-flow__swarm_init, mcp__claude-flow__agent_spawn, mcp__claude-flow__task_orchestrate, mcp__claude-flow__memory_usage, mcp__claude-flow__memory_search, mcp__claude-flow__memory_namespace, mcp__claude-flow__memory_stats, mcp__claude-flow__neural_train, mcp__claude-flow__neural_predict, mcp__claude-flow__workflow_create, mcp__claude-flow__workflow_execute, mcp__claude-flow__performance_report, mcp__claude-flow__bottleneck_analyze, mcp__claude-flow__batch_process, mcp__claude-flow__parallel_execute, mcp__claude-flow__swarm_status, mcp__claude-flow__agent_list
-description: Execute advanced multi-agent workflows with Claude-Flow MCP integration for enhanced orchestration and memory-driven intelligence
+allowed-tools: Task, TodoRead, TodoWrite, Read, Grep, Bash(git:*), Bash(npm:*), WebFetch, mcp__claude-flow__swarm_init, mcp__claude-flow__agent_spawn, mcp__claude-flow__task_orchestrate, mcp__claude-flow__memory_usage, mcp__claude-flow__memory_search, mcp__claude-flow__memory_namespace, mcp__claude-flow__memory_persist, mcp__claude-flow__memory_backup, mcp__claude-flow__memory_restore, mcp__claude-flow__memory_compress, mcp__claude-flow__memory_sync, mcp__claude-flow__neural_train, mcp__claude-flow__neural_predict, mcp__claude-flow__neural_patterns, mcp__claude-flow__neural_status, mcp__claude-flow__cognitive_analyze, mcp__claude-flow__learning_adapt, mcp__claude-flow__pattern_recognize, mcp__claude-flow__workflow_create, mcp__claude-flow__workflow_execute, mcp__claude-flow__workflow_export, mcp__claude-flow__automation_setup, mcp__claude-flow__pipeline_create, mcp__claude-flow__scheduler_manage, mcp__claude-flow__trigger_setup, mcp__claude-flow__performance_report, mcp__claude-flow__bottleneck_analyze, mcp__claude-flow__token_usage, mcp__claude-flow__benchmark_run, mcp__claude-flow__metrics_collect, mcp__claude-flow__health_check, mcp__claude-flow__batch_process, mcp__claude-flow__parallel_execute, mcp__claude-flow__swarm_status, mcp__claude-flow__swarm_monitor, mcp__claude-flow__agent_list, mcp__claude-flow__agent_metrics, mcp__claude-flow__load_balance, mcp__claude-flow__coordination_sync, mcp__claude-flow__swarm_scale, mcp__claude-flow__sparc_mode
+description: Execute advanced multi-agent workflows with SPARC methodology and Claude-Flow MCP integration for enhanced orchestration, neural intelligence, and memory-driven development
 ---
 
-# Workflow Orchestrator with Claude-Flow MCP
+# Workflow Orchestrator with SPARC Methodology & Claude-Flow MCP
 
-Execute intelligent workflows using Claude-Flow's advanced MCP tools for swarm coordination, neural optimization, memory-driven context, and parallel execution.
+Execute intelligent workflows using Claude-Flow's SPARC methodology and advanced MCP tools for swarm coordination, neural optimization, memory-driven context, and specialized agent orchestration.
 
 ## Workflow: $ARGUMENTS
+
+## SPARC Methodology Integration
+
+You can operate in any of these specialized SPARC modes from Claude Flow:
+
+### Primary Development Modes
+- **orchestrator** - Multi-agent task orchestration and coordination
+- **coder** - Autonomous code generation and implementation  
+- **researcher** - Deep research and comprehensive analysis
+- **tdd** - Test-driven development methodology
+- **architect** - System design and architecture planning
+- **reviewer** - Code review and quality optimization
+- **debugger** - Debug and fix issues systematically
+- **tester** - Comprehensive testing and validation
+- **analyst** - Code and data analysis specialist
+- **optimizer** - Performance optimization specialist
+- **documenter** - Documentation generation and maintenance
+
+### Specialized Modes
+- **designer** - UI/UX design and user experience
+- **innovator** - Creative problem solving and innovation
+- **swarm-coordinator** - Swarm coordination and management
+- **memory-manager** - Memory and knowledge management
+- **batch-executor** - Parallel task execution specialist
+- **workflow-manager** - Workflow automation and process management
+
+Use `mcp__claude-flow__sparc_mode` to run specific SPARC development modes (dev, api, ui, test, refactor) with task-specific optimization.
 
 ## Core Principles
 
@@ -60,17 +87,25 @@ Monitor workflow performance, identify bottlenecks, and optimize execution strat
 
 ## Key MCP Tool Guidelines
 
-### Memory System Operations
-- Use `memory_usage` to store and retrieve context, patterns, and learnings
-- Use `memory_search` to find relevant patterns from previous workflows
-- Use `memory_namespace` to organize data by project, feature, or type
-- Use `memory_stats` to monitor memory usage and optimize storage
+### Advanced Memory System Operations
+- Use `memory_usage` to store and retrieve context, patterns, and learnings with TTL and namespacing
+- Use `memory_search` to find relevant patterns from previous workflows with advanced pattern matching
+- Use `memory_namespace` to organize data by project, feature, or type with hierarchical structure
+- Use `memory_persist` for cross-session persistence and continuity
+- Use `memory_backup` and `memory_restore` for data protection and recovery
+- Use `memory_compress` to optimize storage efficiency
+- Use `memory_sync` to synchronize memory across instances
 - Always check memory first before implementing new solutions
 
-### Swarm Coordination
-- Use `swarm_init` with appropriate topology for task complexity
-- Use `swarm_status` to monitor swarm health and performance
+### Advanced Swarm Coordination
+- Use `swarm_init` with appropriate topology for task complexity (hierarchical, mesh, ring, star)
+- Use `swarm_status` to monitor swarm health and performance in real-time
+- Use `swarm_monitor` for continuous real-time monitoring and alerts
+- Use `swarm_scale` to auto-scale agent count based on workload
 - Use `agent_list` to track active agents and their capabilities
+- Use `agent_metrics` to analyze individual agent performance
+- Use `load_balance` to distribute tasks efficiently across agents
+- Use `coordination_sync` to synchronize agent coordination and prevent conflicts
 - Choose topology based on workflow needs (hierarchical, mesh, star, ring)
 
 ### Task Orchestration
@@ -79,38 +114,84 @@ Monitor workflow performance, identify bottlenecks, and optimize execution strat
 - Use `batch_process` for bulk operations on similar items
 - Monitor task progress and handle failures appropriately
 
-### Neural Intelligence
-- Use `neural_train` to learn from successful patterns
+### Neural Intelligence & Cognitive Patterns
+- Use `neural_train` to learn from successful patterns with WASM SIMD acceleration
 - Use `neural_predict` to optimize future executions
+- Use `neural_patterns` to analyze cognitive patterns for workflow optimization
+- Use `neural_status` to monitor neural network health and performance
+- Use `cognitive_analyze` for advanced behavioral pattern analysis
+- Use `learning_adapt` for adaptive learning based on feedback
+- Use `pattern_recognize` for identifying optimal workflow patterns
 - Train on coordination patterns, code patterns, and performance data
 - Apply predictions to improve workflow efficiency
 
-### Performance Optimization
-- Use `performance_report` to monitor execution metrics
-- Use `bottleneck_analyze` to identify and resolve issues
+### Comprehensive Performance Optimization
+- Use `performance_report` to generate comprehensive performance reports with real-time metrics
+- Use `bottleneck_analyze` to identify and resolve performance bottlenecks systematically
+- Use `token_usage` to analyze and optimize token consumption patterns
+- Use `benchmark_run` to execute performance benchmarks and comparisons
+- Use `metrics_collect` to gather system-wide performance metrics
+- Use `health_check` for continuous system health monitoring
 - Regular monitoring prevents performance degradation
-- Adjust strategies based on performance data
+- Adjust strategies based on performance data and trend analysis
 
-### Workflow Management
-- Use `workflow_create` to define reusable workflow templates
-- Use `workflow_execute` to run workflows with parameters
-- Store successful workflows in memory for reuse
-- Evolve workflows based on performance and outcomes
+### Advanced Workflow & Automation Management
+- Use `workflow_create` to define reusable workflow templates with dependencies
+- Use `workflow_execute` to run workflows with parameters and context
+- Use `workflow_export` to export workflow definitions for sharing and version control
+- Use `automation_setup` to create intelligent automation rules and triggers
+- Use `pipeline_create` to design CI/CD pipelines with workflow integration
+- Use `scheduler_manage` to handle complex task scheduling and timing
+- Use `trigger_setup` to configure event-driven workflow execution
+- Store successful workflows in memory for reuse and pattern learning
+- Evolve workflows based on performance outcomes and neural insights
 
-## Workflow Best Practices
+## Enhanced Workflow Best Practices with SPARC Integration
 
-1. **Memory First** - Always check memory for existing patterns and solutions
-2. **Initialize Swarm Early** - Set up coordination before spawning agents
-3. **Define Dependencies** - Clear task orchestration prevents conflicts
-4. **Monitor Continuously** - Regular performance checks catch issues early
-5. **Store Everything** - Save patterns, decisions, and learnings for future use
-6. **Parallelize Aggressively** - Use concurrent execution wherever possible
-7. **Learn and Adapt** - Use neural training to improve over time
-8. **Namespace Organization** - Keep memory organized by context
-9. **Measure Success** - Track metrics to validate improvements
-10. **Evolve Workflows** - Continuously refine based on outcomes
+1. **SPARC Mode Selection** - Choose appropriate SPARC mode based on task type and complexity
+2. **Memory-First Approach** - Always check memory for existing patterns, solutions, and learnings
+3. **Early Swarm Initialization** - Set up coordination topology before spawning specialized agents
+4. **Neural Pattern Learning** - Train on successful patterns and apply cognitive insights
+5. **Clear Dependency Definition** - Use task orchestration to prevent agent conflicts and ensure proper sequencing
+6. **Continuous Performance Monitoring** - Real-time health checks and bottleneck analysis
+7. **Comprehensive Data Storage** - Save patterns, decisions, learnings, and performance metrics
+8. **Aggressive Parallelization** - Maximize concurrent execution for independent tasks
+9. **Adaptive Learning Integration** - Use neural networks and cognitive analysis for continuous improvement
+10. **Hierarchical Memory Organization** - Maintain organized namespaces for different contexts and projects
+11. **Automated Workflow Evolution** - Use triggers and automation to refine workflows based on outcomes
+12. **Cross-Session Persistence** - Leverage memory backup/restore for continuity across sessions
+13. **Performance-Driven Optimization** - Regular benchmarking and metric-based improvements
+14. **Agent Specialization** - Deploy task-specific agents (coder, researcher, tester, etc.) for optimal results
+15. **Intelligent Load Balancing** - Distribute workload efficiently across swarm agents
 
-This enhanced orchestrator leverages Claude-Flow's complete MCP toolkit including the powerful memory system for context persistence, pattern reuse, and continuous learning across sessions while maintaining code quality and architectural integrity.
+## SPARC-Enhanced Execution Example
+
+```
+# 1. Select SPARC mode and initialize swarm
+mcp__claude-flow__sparc_mode(mode="orchestrator", task_description="Multi-component system implementation")
+mcp__claude-flow__swarm_init(topology="hierarchical", strategy="adaptive")
+
+# 2. Check memory for patterns and spawn specialized agents
+mcp__claude-flow__memory_search(pattern="system implementation patterns")
+mcp__claude-flow__agent_spawn(type="architect", capabilities=["system_design", "documentation"])
+mcp__claude-flow__agent_spawn(type="coder", capabilities=["implementation", "testing"])
+mcp__claude-flow__agent_spawn(type="reviewer", capabilities=["code_review", "optimization"])
+
+# 3. Orchestrate with neural optimization
+mcp__claude-flow__neural_patterns(action="analyze")
+mcp__claude-flow__task_orchestrate(task="Implementation with testing and review", strategy="adaptive", priority="high")
+
+# 4. Monitor and optimize throughout execution
+mcp__claude-flow__swarm_monitor(interval=5)
+mcp__claude-flow__performance_report(format="detailed")
+mcp__claude-flow__bottleneck_analyze()
+
+# 5. Store learnings and patterns for future use
+mcp__claude-flow__memory_usage(action="store", key="successful_implementation_pattern", value="execution_results")
+mcp__claude-flow__neural_train(pattern_type="coordination", training_data="workflow_results")
+```
+
+This enhanced orchestrator leverages Claude-Flow's complete MCP toolkit with SPARC methodology integration, including advanced memory systems, neural pattern recognition, cognitive analysis, and intelligent swarm coordination for maximum efficiency and continuous learning across sessions.
     '';
     "remotion.md" = ''
 # About Remotion
