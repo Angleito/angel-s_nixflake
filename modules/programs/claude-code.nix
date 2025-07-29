@@ -5,6 +5,113 @@ let
   
   # Command definitions
   commands = {
+    "workflow.md" = ''
+---
+allowed-tools: Task, TodoRead, TodoWrite, Read, Grep, Bash(git:*), Bash(npm:*), WebFetch, mcp__claude-flow__swarm_init, mcp__claude-flow__agent_spawn, mcp__claude-flow__task_orchestrate, mcp__claude-flow__memory_usage, mcp__claude-flow__memory_search, mcp__claude-flow__memory_namespace, mcp__claude-flow__memory_stats, mcp__claude-flow__neural_train, mcp__claude-flow__neural_predict, mcp__claude-flow__workflow_create, mcp__claude-flow__workflow_execute, mcp__claude-flow__performance_report, mcp__claude-flow__bottleneck_analyze, mcp__claude-flow__batch_process, mcp__claude-flow__parallel_execute, mcp__claude-flow__swarm_status, mcp__claude-flow__agent_list
+description: Execute advanced multi-agent workflows with Claude-Flow MCP integration for enhanced orchestration and memory-driven intelligence
+---
+
+# Workflow Orchestrator with Claude-Flow MCP
+
+Execute intelligent workflows using Claude-Flow's advanced MCP tools for swarm coordination, neural optimization, memory-driven context, and parallel execution.
+
+## Workflow: $ARGUMENTS
+
+## Core Principles
+
+1. **No bullshit** - Be direct, honest, and avoid unnecessary complexity or fluff
+2. **Always ask questions** - Clarify requirements, assumptions, and edge cases before proceeding
+3. **Absolutely no mocks whatsoever** - Use real implementations, real data, and real integrations only
+4. **Reuse code from the repo** - Always check for existing implementations before creating new ones
+5. **Edit existing files and use existing folders** - Modify what's there before creating new structures
+6. **Use ultrathink and omnisearch** - Leverage advanced planning and research capabilities
+7. **Create short, efficient, and modular code** - Focus on clarity and maintainability
+8. **Always separate concerns** - Each module should have a single, clear responsibility
+9. **Execute plans in parallel** - Use Claude-Flow MCP tools for enhanced parallelism
+10. **Prevent agent collisions** - Use swarm coordination for conflict-free execution
+11. **Follow order of operations** - Respect sequential dependencies with task orchestration
+12. **Leverage persistent memory** - Use memory system for context and pattern reuse
+
+## Enhanced Execution Strategy
+
+### Phase 1: Memory Context Loading
+First, check memory for previous patterns and successful implementations using the memory system. Search for relevant patterns, load context from previous sessions, and identify reusable components.
+
+### Phase 2: Swarm Initialization
+Initialize Claude-Flow swarm with appropriate topology based on task complexity. Choose hierarchical for clear delegation, mesh for peer collaboration, star for centralized control, or ring for sequential processing.
+
+### Phase 3: Workflow Definition
+Create workflow using Claude-Flow's workflow tools with parallel capabilities where appropriate. Define clear steps with dependencies and enable concurrent execution for independent tasks.
+
+### Phase 4: Agent Spawning
+Deploy specialized agents based on workflow requirements. Use researcher agents for information gathering, coder agents for implementation, tester agents for validation, and coordinator agents for orchestration.
+
+### Phase 5: Task Orchestration
+Orchestrate tasks with intelligent scheduling and dependency management. Execute independent tasks in parallel while respecting sequential dependencies. Monitor progress and handle failures gracefully.
+
+### Phase 6: Memory-Enhanced Processing
+Store successful patterns, decisions, and learnings in memory for future use. Query memory for similar problems and solutions. Maintain namespace organization for different types of data.
+
+### Phase 7: Neural Pattern Application
+Train neural models on successful patterns and apply predictions to optimize workflow execution. Learn from past performance to improve future runs.
+
+### Phase 8: Performance Monitoring
+Monitor workflow performance, identify bottlenecks, and optimize execution strategies. Generate reports and adjust based on metrics.
+
+## Key MCP Tool Guidelines
+
+### Memory System Operations
+- Use `memory_usage` to store and retrieve context, patterns, and learnings
+- Use `memory_search` to find relevant patterns from previous workflows
+- Use `memory_namespace` to organize data by project, feature, or type
+- Use `memory_stats` to monitor memory usage and optimize storage
+- Always check memory first before implementing new solutions
+
+### Swarm Coordination
+- Use `swarm_init` with appropriate topology for task complexity
+- Use `swarm_status` to monitor swarm health and performance
+- Use `agent_list` to track active agents and their capabilities
+- Choose topology based on workflow needs (hierarchical, mesh, star, ring)
+
+### Task Orchestration
+- Use `task_orchestrate` to manage dependencies and execution order
+- Use `parallel_execute` for independent tasks to maximize throughput
+- Use `batch_process` for bulk operations on similar items
+- Monitor task progress and handle failures appropriately
+
+### Neural Intelligence
+- Use `neural_train` to learn from successful patterns
+- Use `neural_predict` to optimize future executions
+- Train on coordination patterns, code patterns, and performance data
+- Apply predictions to improve workflow efficiency
+
+### Performance Optimization
+- Use `performance_report` to monitor execution metrics
+- Use `bottleneck_analyze` to identify and resolve issues
+- Regular monitoring prevents performance degradation
+- Adjust strategies based on performance data
+
+### Workflow Management
+- Use `workflow_create` to define reusable workflow templates
+- Use `workflow_execute` to run workflows with parameters
+- Store successful workflows in memory for reuse
+- Evolve workflows based on performance and outcomes
+
+## Workflow Best Practices
+
+1. **Memory First** - Always check memory for existing patterns and solutions
+2. **Initialize Swarm Early** - Set up coordination before spawning agents
+3. **Define Dependencies** - Clear task orchestration prevents conflicts
+4. **Monitor Continuously** - Regular performance checks catch issues early
+5. **Store Everything** - Save patterns, decisions, and learnings for future use
+6. **Parallelize Aggressively** - Use concurrent execution wherever possible
+7. **Learn and Adapt** - Use neural training to improve over time
+8. **Namespace Organization** - Keep memory organized by context
+9. **Measure Success** - Track metrics to validate improvements
+10. **Evolve Workflows** - Continuously refine based on outcomes
+
+This enhanced orchestrator leverages Claude-Flow's complete MCP toolkit including the powerful memory system for context persistence, pattern reuse, and continuous learning across sessions while maintaining code quality and architectural integrity.
+    '';
     "remotion.md" = ''
 # About Remotion
 
