@@ -24,6 +24,9 @@ in
   ];
 
   home.packages = with pkgs; [
+    # Development essentials
+    nodejs_20       # Node.js for npm and Claude Code
+    
     # Core tools
     bat             # Better cat with syntax highlighting
     eza             # Better ls with modern features  
@@ -265,12 +268,21 @@ in
     
     # Configure npm for global installations
     mkdir -p "$HOME/.npm-global"
-    npm config set prefix "$HOME/.npm-global"
-    export PATH="$HOME/.npm-global/bin:$PATH"
     
-    # Install Claude Code CLI (latest version)
-    echo "Installing Claude Code CLI..."
-    npm install -g @anthropic-ai/claude-code || echo "Failed to install Claude Code"
+    # Use the npm from nix packages
+    NPM_PATH="${pkgs.nodejs_20}/bin/npm"
+    NODE_PATH="${pkgs.nodejs_20}/bin/node"
+    
+    if [ -x "$NPM_PATH" ]; then
+      $NPM_PATH config set prefix "$HOME/.npm-global"
+      export PATH="$HOME/.npm-global/bin:$PATH"
+      
+      # Install Claude Code CLI (latest version)
+      echo "Installing Claude Code CLI..."
+      $NPM_PATH install -g @anthropic-ai/claude-code || echo "Failed to install Claude Code"
+    else
+      echo "npm not found, skipping Claude Code installation"
+    fi
     
     echo "Configuring Claude MCP servers..."
     
@@ -328,13 +340,15 @@ in
     )
     
     # Update ~/.claude.json with MCP servers
+    JQ_PATH="${pkgs.jq}/bin/jq"
+    
     if [ -f "$HOME/.claude.json" ]; then
       echo "$MCP_SERVERS" > /tmp/mcp-servers.json
-      jq '.mcpServers = $servers' --slurpfile servers /tmp/mcp-servers.json "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
+      $JQ_PATH '.mcpServers = $servers' --slurpfile servers /tmp/mcp-servers.json "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
       mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
       rm -f /tmp/mcp-servers.json
     else
-      echo '{}' | jq --argjson servers "$MCP_SERVERS" '.mcpServers = $servers' > "$HOME/.claude.json"
+      echo '{}' | $JQ_PATH --argjson servers "$MCP_SERVERS" '.mcpServers = $servers' > "$HOME/.claude.json"
     fi
     
     echo "Claude MCP configuration complete!"
