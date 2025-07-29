@@ -259,6 +259,86 @@ in
     '';
 
   # Claude configuration is now handled by the claude-code module in darwin-configuration.nix
+  # Add Claude MCP configuration and installation
+  home.activation.claudeMcpConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
+    echo "Installing and configuring Claude Code..."
+    
+    # Configure npm for global installations
+    mkdir -p "$HOME/.npm-global"
+    npm config set prefix "$HOME/.npm-global"
+    export PATH="$HOME/.npm-global/bin:$PATH"
+    
+    # Install Claude Code CLI (latest version)
+    echo "Installing Claude Code CLI..."
+    npm install -g @anthropic-ai/claude-code || echo "Failed to install Claude Code"
+    
+    echo "Configuring Claude MCP servers..."
+    
+    # Create MCP server configuration
+    MCP_SERVERS=$(cat << 'EOF'
+    {
+      "puppeteer": {
+        "command": "npx",
+        "args": ["-y", "@puppeteer/mcp-server"]
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["-y", "@michaeltliu/mcp-server-playwright"]
+      },
+      "mcp-omnisearch": {
+        "command": "npx",
+        "args": ["-y", "mcp-omnisearch"],
+        "env": {
+          "TAVILY_API_KEY": "''${TAVILY_API_KEY}",
+          "BRAVE_API_KEY": "''${BRAVE_API_KEY}",
+          "KAGI_API_KEY": "''${KAGI_API_KEY}",
+          "PERPLEXITY_API_KEY": "''${PERPLEXITY_API_KEY}",
+          "JINA_AI_API_KEY": "''${JINA_AI_API_KEY}",
+          "FIRECRAWL_API_KEY": "''${FIRECRAWL_API_KEY}"
+        }
+      },
+      "claude-flow": {
+        "command": "/Users/angel/Projects/claude-flow/bin/claude-flow",
+        "args": ["mcp", "start", "--transport", "stdio"],
+        "env": {
+          "NODE_ENV": "production"
+        }
+      },
+      "ruv-swarm": {
+        "command": "npx",
+        "args": ["-y", "ruv-swarm", "mcp", "start"],
+        "env": {
+          "NODE_ENV": "production"
+        }
+      },
+      "sequential-thinking": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+      },
+      "memory": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-memory"]
+      },
+      "filesystem": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/angel/Projects", "/Users/angel/Documents", "/Users/angel/.claude", "/tmp"]
+      }
+    }
+    EOF
+    )
+    
+    # Update ~/.claude.json with MCP servers
+    if [ -f "$HOME/.claude.json" ]; then
+      echo "$MCP_SERVERS" > /tmp/mcp-servers.json
+      jq '.mcpServers = $servers' --slurpfile servers /tmp/mcp-servers.json "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
+      mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
+      rm -f /tmp/mcp-servers.json
+    else
+      echo '{}' | jq --argjson servers "$MCP_SERVERS" '.mcpServers = $servers' > "$HOME/.claude.json"
+    fi
+    
+    echo "Claude MCP configuration complete!"
+  '';
 
   # Cursor MCP Configuration
   # Create the Cursor MCP configuration file with environment variable support
