@@ -138,9 +138,14 @@ in
     };
     database = {
       enable = true;
-      enablePostgresql = true;
-      enableRedis = true;
-      enableMongodb = false;
+      postgresql = {
+        enable = true;
+        enableService = false;
+      };
+      redis = {
+        enable = true;
+        enableService = false;
+      };
     };
   };
 
