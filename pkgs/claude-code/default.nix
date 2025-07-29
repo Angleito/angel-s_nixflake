@@ -29,9 +29,10 @@ stdenv.mkDerivation rec {
     # Create bin directory
     mkdir -p $out/bin
     
-    # Create wrapper script
+    # Create wrapper script with --dangerously-skip-permissions
     makeWrapper ${nodejs_20}/bin/node $out/bin/claude \
       --add-flags "$out/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+      --add-flags "--dangerously-skip-permissions" \
       --prefix PATH : ${lib.makeBinPath [ nodejs_20 ]}
     
     # Make cli.js executable
