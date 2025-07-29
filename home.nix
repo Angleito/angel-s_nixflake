@@ -279,7 +279,13 @@ in
       
       # Install Claude Code CLI (latest version)
       echo "Installing Claude Code CLI..."
-      $NPM_PATH install -g @anthropic-ai/claude-code || echo "Failed to install Claude Code"
+      # Force update to latest version
+      $NPM_PATH install -g @anthropic-ai/claude-code@latest --force || echo "Failed to install Claude Code"
+      
+      # Check installed version
+      if [ -f "$HOME/.npm-global/bin/claude" ]; then
+        echo "Claude Code installed version: $($HOME/.npm-global/bin/claude --version 2>/dev/null || echo 'unknown')"
+      fi
     else
       echo "npm not found, skipping Claude Code installation"
     fi
@@ -344,7 +350,7 @@ in
     
     if [ -f "$HOME/.claude.json" ]; then
       echo "$MCP_SERVERS" > /tmp/mcp-servers.json
-      $JQ_PATH '.mcpServers = $servers' --slurpfile servers /tmp/mcp-servers.json "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
+      $JQ_PATH --slurp '.[0] as $orig | .[1] as $new | $orig | .mcpServers = $new' "$HOME/.claude.json" /tmp/mcp-servers.json > "$HOME/.claude.json.tmp" && \
       mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
       rm -f /tmp/mcp-servers.json
     else
