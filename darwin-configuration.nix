@@ -81,6 +81,10 @@ in
         BROWSER = "open";
       };
     };
+    autoUpdate = {
+      enable = true;
+      interval = "daily";  # Options: daily, weekly, monthly
+    };
   };
 
   applications.homebrew.enable = true;

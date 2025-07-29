@@ -617,19 +617,35 @@ in {
         
         # Install Claude Code CLI globally (always latest version)
         echo "Installing Claude Code CLI..."
+        # First uninstall any existing version
+        npm uninstall -g @anthropic-ai/claude-code 2>/dev/null || true
         # Clear npm cache to ensure we get the latest
         npm cache clean --force
-        npm install -g @anthropic-ai/claude-code@latest --force || echo "Failed to install Claude Code"
+        # Update npm registry cache
+        npm cache verify
+        # Force install the latest version
+        npm install -g @anthropic-ai/claude-code@latest --force --registry https://registry.npmjs.org || echo "Failed to install Claude Code"
         
-        # Install required MCP servers globally
+        # Install required MCP servers globally (always latest versions)
         echo "Installing MCP servers..."
-        npm install -g @modelcontextprotocol/server-filesystem \
-                       @modelcontextprotocol/server-memory \
-                       @modelcontextprotocol/server-sequential-thinking \
-                       @cloudflare/mcp-server-puppeteer \
-                       @michaeltliu/mcp-server-playwright \
-                       mcp-omnisearch \
-                       ruv-swarm || echo "Some MCP servers failed to install"
+        # First uninstall existing versions to ensure we get latest
+        npm uninstall -g @modelcontextprotocol/server-filesystem \
+                         @modelcontextprotocol/server-memory \
+                         @modelcontextprotocol/server-sequential-thinking \
+                         @cloudflare/mcp-server-puppeteer \
+                         @puppeteer/mcp-server \
+                         @michaeltliu/mcp-server-playwright \
+                         mcp-omnisearch \
+                         ruv-swarm 2>/dev/null || true
+        
+        # Install latest versions
+        npm install -g @modelcontextprotocol/server-filesystem@latest \
+                       @modelcontextprotocol/server-memory@latest \
+                       @modelcontextprotocol/server-sequential-thinking@latest \
+                       @puppeteer/mcp-server@latest \
+                       @michaeltliu/mcp-server-playwright@latest \
+                       mcp-omnisearch@latest \
+                       ruv-swarm@latest --force || echo "Some MCP servers failed to install"
         
         echo "Claude Code configuration complete!"
       '';

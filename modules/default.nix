@@ -13,6 +13,7 @@
     ./system/defaults.nix
     ./system/xcode.nix
     ./system/environment.nix
+    ./system/auto-update.nix
     
     # Program modules
     ./programs/git-env.nix

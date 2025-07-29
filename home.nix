@@ -279,10 +279,14 @@ in
       
       # Install Claude Code CLI (latest version)
       echo "Installing Claude Code CLI..."
+      # First uninstall any existing version
+      $NPM_PATH uninstall -g @anthropic-ai/claude-code 2>/dev/null || true
       # Clear npm cache to ensure we get the latest
       $NPM_PATH cache clean --force
-      # Force update to latest version
-      $NPM_PATH install -g @anthropic-ai/claude-code@latest --force || echo "Failed to install Claude Code"
+      # Update npm registry cache
+      $NPM_PATH cache verify
+      # Force install the latest version
+      $NPM_PATH install -g @anthropic-ai/claude-code@latest --force --registry https://registry.npmjs.org || echo "Failed to install Claude Code"
       
       # Check installed version
       if [ -f "$HOME/.npm-global/bin/claude" ]; then
