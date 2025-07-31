@@ -99,7 +99,7 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (pkgs.stdenv.isDarwin && cfg.enable) {
     # Create Cursor configuration files
     system.activationScripts.cursorSetup = {
       text = ''

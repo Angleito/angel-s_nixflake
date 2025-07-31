@@ -1,17 +1,15 @@
 { config, pkgs, lib, ... }:
 
-let
-  jsonUtils = import ./json-utils.nix { inherit lib; };
-in
-
 {
   # Set the primary user (required for the options below)
   system.primaryUser = "angel";
   
   # Nix configuration
   nix = {
-    package = pkgs.nix;
-    settings.experimental-features = "nix-command flakes";
+    # Disable nix-darwin's management for Determinate compatibility
+    enable = false;
+    # package = pkgs.nix;
+    # settings.experimental-features = "nix-command flakes";
   };
 
   # Set your username

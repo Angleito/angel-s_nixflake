@@ -33,7 +33,7 @@ with lib;
     };
   };
 
-  config = mkIf config.system.power.enable {
+  config = mkIf (pkgs.stdenv.isLinux && config.system.power.enable) {
     # TLP for power management
     services.tlp = mkIf config.system.power.enableTLP {
       enable = true;

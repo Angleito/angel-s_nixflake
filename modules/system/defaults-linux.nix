@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 
 {
-  config = {
+  config = lib.mkIf pkgs.stdenv.isLinux {
     # Linux system defaults
     
     # Font configuration

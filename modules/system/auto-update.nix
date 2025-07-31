@@ -14,7 +14,7 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (pkgs.stdenv.isDarwin && cfg.enable) {
     # Create update scripts
     environment.systemPackages = with pkgs; [
       (writeScriptBin "update-all-packages" ''

@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   options = {
@@ -7,7 +7,7 @@
     system.power.preventDiskSleep = lib.mkEnableOption "prevent disk from sleeping";
   };
 
-  config = {
+  config = lib.mkIf pkgs.stdenv.isDarwin {
     # Power management settings
     system.activationScripts.powerManagement.text = ''
       echo "Configuring power management settings..."

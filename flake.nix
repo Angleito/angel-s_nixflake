@@ -41,8 +41,9 @@
     overlays.default = final: prev: 
       let
         customPkgs = import ./pkgs { pkgs = final; };
+        nodejsFix = import ./overlays/nodejs-fix.nix final prev;
       in
-      customPkgs;
+      customPkgs // nodejsFix;
     
     # Packages available as flake outputs for all systems
     packages = forAllSystems (system:
@@ -303,8 +304,6 @@
             nixpkgs.overlays = [ self.overlays.default ];
           }
           
-          # Import our modules
-          ./modules
           
           # Main configuration
           ./darwin-configuration.nix
@@ -335,8 +334,6 @@
             nixpkgs.overlays = [ self.overlays.default ];
           }
           
-          # Import our modules
-          ./modules
           
           # Main configuration
           ./darwin-configuration.nix
@@ -367,8 +364,6 @@
             nixpkgs.overlays = [ self.overlays.default ];
           }
           
-          # Import our modules
-          ./modules
           
           # Main configuration
           ./darwin-configuration.nix

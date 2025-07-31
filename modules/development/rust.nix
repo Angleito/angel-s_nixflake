@@ -1,10 +1,9 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Import platform detection
-  platform = import ../lib/platform.nix { inherit lib pkgs; };
-  isDarwin = platform.lib.platform.isDarwin;
-  isLinux = platform.lib.platform.isLinux;
+  # Platform detection using pkgs directly
+  isDarwin = pkgs.stdenv.isDarwin;
+  isLinux = pkgs.stdenv.isLinux;
   
   # Get the primary user based on platform
   primaryUser = if isDarwin then 
@@ -67,41 +66,42 @@ in
     })
     
     # Linux-specific configuration
-    (lib.mkIf (config.development.rust.enable && isLinux) {
-      # On Linux/NixOS, we'll handle this through systemd user service
-      systemd.user.services.rust-setup = {
-        description = "Setup Rust development environment";
-        wantedBy = [ "default.target" ];
-        after = [ "network.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          ExecStart = pkgs.writeShellScript "rust-setup" ''
-            # Create Rust directories
-            mkdir -p "$HOME/.rustup" "$HOME/.cargo" "$HOME/.cargo/bin"
-            
-            # Initialize rustup if not already done
-            if [ ! -f "$HOME/.cargo/bin/cargo" ]; then
-              echo "Initializing Rust toolchain..."
-              export RUSTUP_HOME="$HOME/.rustup"
-              export CARGO_HOME="$HOME/.cargo"
-              ${pkgs.rustup}/bin/rustup toolchain install stable
-              ${pkgs.rustup}/bin/rustup default stable
-            fi
-          '';
-        };
-      };
-      
-      # Environment variables for all users
-      environment.variables = {
-        RUSTUP_HOME = "$HOME/.rustup";
-        CARGO_HOME = "$HOME/.cargo";
-      };
-      
-      # Add cargo bin to PATH
-      environment.shellInit = ''
-        export PATH="$HOME/.cargo/bin:$PATH"
-      '';
-    })
+    # TODO: Re-enable when running on Linux
+    # (lib.mkIf (config.development.rust.enable && isLinux) {
+    #   # On Linux/NixOS, we'll handle this through systemd user service
+    #   systemd.user.services.rust-setup = {
+    #     description = "Setup Rust development environment";
+    #     wantedBy = [ "default.target" ];
+    #     after = [ "network.target" ];
+    #     serviceConfig = {
+    #       Type = "oneshot";
+    #       RemainAfterExit = true;
+    #       ExecStart = pkgs.writeShellScript "rust-setup" ''
+    #         # Create Rust directories
+    #         mkdir -p "$HOME/.rustup" "$HOME/.cargo" "$HOME/.cargo/bin"
+    #         
+    #         # Initialize rustup if not already done
+    #         if [ ! -f "$HOME/.cargo/bin/cargo" ]; then
+    #           echo "Initializing Rust toolchain..."
+    #           export RUSTUP_HOME="$HOME/.rustup"
+    #           export CARGO_HOME="$HOME/.cargo"
+    #           ${pkgs.rustup}/bin/rustup toolchain install stable
+    #           ${pkgs.rustup}/bin/rustup default stable
+    #         fi
+    #       '';
+    #     };
+    #   };
+    #   
+    #   # Environment variables for all users
+    #   environment.variables = {
+    #     RUSTUP_HOME = "$HOME/.rustup";
+    #     CARGO_HOME = "$HOME/.cargo";
+    #   };
+    #   
+    #   # Add cargo bin to PATH
+    #   environment.shellInit = ''
+    #     export PATH="$HOME/.cargo/bin:$PATH"
+    #   '';
+    # })
   ];
 }

@@ -2,9 +2,8 @@
 
 let
   cfg = config.development.database;
-  platform = import ../lib/platform.nix { inherit lib pkgs; };
-  isDarwin = platform.lib.platform.isDarwin;
-  isLinux = platform.lib.platform.isLinux;
+  isDarwin = pkgs.stdenv.isDarwin;
+  isLinux = pkgs.stdenv.isLinux;
   
   # Get the primary user based on platform
   primaryUser = if isDarwin then 
@@ -194,55 +193,56 @@ in {
     })
     
     # Linux-specific configuration
-    (lib.mkIf isLinux {
-      # On NixOS, we can use proper systemd services
-      services.postgresql = lib.mkIf (cfg.postgresql.enable && cfg.postgresql.enableService) {
-        enable = true;
-        package = pkgs.postgresql_14;
-        enableTCPIP = true;
-        authentication = pkgs.lib.mkOverride 10 ''
-          local all all trust
-          host all all 127.0.0.1/32 trust
-          host all all ::1/128 trust
-        '';
-      };
-      
-      services.redis.servers."" = lib.mkIf (cfg.redis.enable && cfg.redis.enableService) {
-        enable = true;
-      };
-      
-      # Create helper scripts for Linux users
-      systemd.user.services.database-setup = lib.mkIf (cfg.postgresql.enable || cfg.redis.enable) {
-        description = "Setup database helper scripts";
-        wantedBy = [ "default.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          ExecStart = pkgs.writeShellScript "database-setup" ''
-            mkdir -p "$HOME/.local/bin"
-            
-            ${lib.optionalString cfg.postgresql.enable ''
-              cat > "$HOME/.local/bin/postgres-start" << 'EOF'
-              #!/bin/bash
-              echo "PostgreSQL is managed by systemd. Use:"
-              echo "  sudo systemctl start postgresql"
-              echo "  sudo systemctl status postgresql"
-              EOF
-              chmod +x "$HOME/.local/bin/postgres-start"
-            ''}
-            
-            ${lib.optionalString cfg.redis.enable ''
-              cat > "$HOME/.local/bin/redis-start" << 'EOF'
-              #!/bin/bash
-              echo "Redis is managed by systemd. Use:"
-              echo "  sudo systemctl start redis"
-              echo "  sudo systemctl status redis"
-              EOF
-              chmod +x "$HOME/.local/bin/redis-start"
-            ''}
-          '';
-        };
-      };
-    })
+    # TODO: Re-enable when running on Linux
+    # (lib.mkIf isLinux {
+    #   # On NixOS, we can use proper systemd services
+    #   services.postgresql = lib.mkIf (cfg.postgresql.enable && cfg.postgresql.enableService) {
+    #     enable = true;
+    #     package = pkgs.postgresql_14;
+    #     enableTCPIP = true;
+    #     authentication = pkgs.lib.mkOverride 10 ''
+    #       local all all trust
+    #       host all all 127.0.0.1/32 trust
+    #       host all all ::1/128 trust
+    #     '';
+    #   };
+    #   
+    #   services.redis.servers."" = lib.mkIf (cfg.redis.enable && cfg.redis.enableService) {
+    #     enable = true;
+    #   };
+    #   
+    #   # Create helper scripts for Linux users
+    #   systemd.user.services.database-setup = lib.mkIf (cfg.postgresql.enable || cfg.redis.enable) {
+    #     description = "Setup database helper scripts";
+    #     wantedBy = [ "default.target" ];
+    #     serviceConfig = {
+    #       Type = "oneshot";
+    #       RemainAfterExit = true;
+    #       ExecStart = pkgs.writeShellScript "database-setup" ''
+    #         mkdir -p "$HOME/.local/bin"
+    #         
+    #         ${lib.optionalString cfg.postgresql.enable ''
+    #           cat > "$HOME/.local/bin/postgres-start" << 'EOF'
+    #           #!/bin/bash
+    #           echo "PostgreSQL is managed by systemd. Use:"
+    #           echo "  sudo systemctl start postgresql"
+    #           echo "  sudo systemctl status postgresql"
+    #           EOF
+    #           chmod +x "$HOME/.local/bin/postgres-start"
+    #         ''}
+    #         
+    #         ${lib.optionalString cfg.redis.enable ''
+    #           cat > "$HOME/.local/bin/redis-start" << 'EOF'
+    #           #!/bin/bash
+    #           echo "Redis is managed by systemd. Use:"
+    #           echo "  sudo systemctl start redis"
+    #           echo "  sudo systemctl status redis"
+    #           EOF
+    #           chmod +x "$HOME/.local/bin/redis-start"
+    #         ''}
+    #       '';
+    #     };
+    #   };
+    # })
   ]);
 }

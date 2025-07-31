@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   options = {
@@ -7,7 +7,7 @@
     applications.homebrew.autoUpgrade = lib.mkEnableOption "automatically upgrade Homebrew packages" // { default = true; };
   };
 
-  config = lib.mkIf config.applications.homebrew.enable {
+  config = lib.mkIf (pkgs.stdenv.isDarwin && config.applications.homebrew.enable) {
     # Homebrew configuration
     homebrew = {
       enable = true;

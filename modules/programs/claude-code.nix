@@ -731,18 +731,22 @@ in {
       text = ''
         echo "Setting up Claude Code configuration..."
         
-        # Create full directory structure
-        mkdir -p ${cfg.configDir}
-        mkdir -p ${cfg.configDir}/agents
-        mkdir -p ${cfg.configDir}/commands
-        mkdir -p ${cfg.configDir}/commands/frontend
-        mkdir -p ${cfg.configDir}/commands/backend
-        mkdir -p ${cfg.configDir}/projects
-        mkdir -p ${cfg.configDir}/statsig
-        mkdir -p ${cfg.configDir}/todos
-        mkdir -p ${cfg.configDir}/shell-snapshots
-        mkdir -p ${cfg.configDir}/ide
-        mkdir -p ${cfg.scriptsDir}
+        # Get the primary user
+        PRIMARY_USER="${config.system.primaryUser}"
+        USER_HOME="/Users/$PRIMARY_USER"
+        
+        # Create full directory structure with proper ownership
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/agents
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/commands
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/commands/frontend
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/commands/backend
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/projects
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/statsig
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/todos
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/shell-snapshots
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/ide
+        sudo -u $PRIMARY_USER mkdir -p $USER_HOME/.claude/scripts
         
         # Create settings.json for Claude Code CLI
         cat > ${cfg.configDir}/settings.json << 'EOF'

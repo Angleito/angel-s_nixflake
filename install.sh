@@ -31,10 +31,10 @@ fi
 # Check if nix-darwin is already installed
 if ! command -v darwin-rebuild &> /dev/null; then
     echo "📦 Installing nix-darwin..."
-    nix run nix-darwin -- switch --flake .
+    nix run nix-darwin -- switch --flake .#angel
 else
     echo "🔄 Updating configuration..."
-    sudo darwin-rebuild switch --flake .
+    sudo darwin-rebuild switch --flake .#angel
 fi
 
 echo ""

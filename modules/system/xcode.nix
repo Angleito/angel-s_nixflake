@@ -1,11 +1,11 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   options = {
     system.xcode.autoInstall = lib.mkEnableOption "automatically install Xcode Command Line Tools";
   };
 
-  config = lib.mkIf config.system.xcode.autoInstall {
+  config = lib.mkIf (pkgs.stdenv.isDarwin && config.system.xcode.autoInstall) {
     # Install Xcode Command Line Tools if not already installed
     system.activationScripts.xcodeTools.text = ''
       if ! xcode-select -p &> /dev/null; then

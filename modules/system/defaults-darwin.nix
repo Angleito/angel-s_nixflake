@@ -1,7 +1,7 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 {
-  config = {
+  config = lib.mkIf pkgs.stdenv.isDarwin {
     # macOS system defaults
     system.defaults = {
       # Dock settings
