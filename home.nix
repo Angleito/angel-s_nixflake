@@ -323,8 +323,12 @@ in
       \. "$NVM_DIR/nvm.sh" || echo "Warning: Failed to load NVM"
       
       # Use default node version if available
-      if [ -f "$NVM_DIR/alias/default" ]; then
-        nvm use default --silent || echo "Warning: Failed to use default node version"
+      if [ -f "$NVM_DIR/alias/default" ] && command -v nvm >/dev/null 2>&1; then
+        DEFAULT_VERSION=$(cat "$NVM_DIR/alias/default")
+        echo "Setting NVM default version to: $DEFAULT_VERSION"
+        nvm use "$DEFAULT_VERSION" --silent 2>/dev/null || echo "Note: Using system Node.js version"
+      else
+        echo "Note: No default NVM version set or nvm command not available"
       fi
     else
       echo "Warning: NVM not found at $NVM_DIR"
@@ -457,8 +461,12 @@ MCPEOF
       \. "$NVM_DIR/nvm.sh" || echo "Warning: Failed to load NVM"
       
       # Use default node version if available
-      if [ -f "$NVM_DIR/alias/default" ]; then
-        nvm use default --silent || echo "Warning: Failed to use default node version"
+      if [ -f "$NVM_DIR/alias/default" ] && command -v nvm >/dev/null 2>&1; then
+        DEFAULT_VERSION=$(cat "$NVM_DIR/alias/default")
+        echo "Setting NVM default version to: $DEFAULT_VERSION"
+        nvm use "$DEFAULT_VERSION" --silent 2>/dev/null || echo "Note: Using system Node.js version"
+      else
+        echo "Note: No default NVM version set or nvm command not available"
       fi
     else
       echo "Warning: NVM not found at $NVM_DIR"
