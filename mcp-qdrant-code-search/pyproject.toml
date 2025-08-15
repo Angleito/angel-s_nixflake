@@ -1,0 +1,27 @@
+[project]
+name = "mcp-qdrant-code-search"
+version = "0.1.0"
+description = "MCP server for semantic code search using Qdrant vector database"
+authors = [
+    {name = "Angel", email = "angel@example.com"}
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "qdrant-client>=1.7.0",
+    "tree-sitter>=0.20.0",
+    "tree-sitter-languages>=1.8.0",
+    "sentence-transformers>=2.2.0",
+    "openai>=1.0.0",
+    "gitpython>=3.1.0",
+    "asyncio-throttle>=1.0.0",
+    "pydantic>=2.0.0",
+    "typing-extensions>=4.0.0",
+]
+requires-python = ">=3.8"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+mcp-qdrant-code-search = "server:main"

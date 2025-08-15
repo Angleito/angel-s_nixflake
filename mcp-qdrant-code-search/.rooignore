@@ -1,0 +1,102 @@
+# Qdrant MCP Server - File exclusion patterns
+# Similar to .gitignore but for semantic search indexing
+
+# Version control
+.git/
+.svn/
+.hg/
+
+# Dependencies
+node_modules/
+venv/
+env/
+.venv/
+__pycache__/
+.pytest_cache/
+vendor/
+target/
+build/
+dist/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Build artifacts
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+*.app
+*.deb
+*.rpm
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Binary files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.pdf
+*.mp4
+*.mp3
+*.wav
+
+# Documentation that doesn't need indexing
+docs/generated/
+api-docs/
+coverage/
+
+# Configuration files that don't contain logic
+*.env
+*.env.*
+.env.local
+.env.production
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Large data files
+*.csv
+*.json
+*.xml
+data/
+datasets/
+
+# Compiled files
+*.pyc
+*.pyo
+*.class
+*.jar
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

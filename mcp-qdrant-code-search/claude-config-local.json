@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "qdrant-code-search": {
+      "command": "/Users/angel/Projects/fortunesheet/mcp-qdrant-code-search/venv/bin/python",
+      "args": ["/Users/angel/Projects/fortunesheet/mcp-qdrant-code-search/server.py"],
+      "env": {
+        "QDRANT_URL": "http://localhost:6333",
+        "EMBEDDING_MODEL": "all-MiniLM-L6-v2",
+        "COLLECTION_PREFIX": "claude-code",
+        "VECTOR_SIZE": "384",
+        "CHUNK_SIZE": "1000",
+        "SEARCH_LIMIT": "10",
+        "SIMILARITY_THRESHOLD": "0.7"
+      }
+    }
+  }
+}
