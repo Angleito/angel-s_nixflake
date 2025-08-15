@@ -25,7 +25,7 @@ in
 
   home.packages = with pkgs; [
     # Development essentials
-    nodejs_20       # Node.js for npm and Claude Code
+    # Node.js is managed by NVM, not included here
     
     # Core tools
     bat             # Better cat with syntax highlighting
@@ -231,6 +231,55 @@ in
     "$HOME/.cargo/bin"
     "$HOME/.npm-global/bin"  # For global npm packages
   ];
+  
+  # Shell program configurations
+  programs.zsh = {
+    enable = true;
+    initExtra = ''
+      # Ensure basic system paths are available first
+      # This fixes issues with basic commands not being found
+      export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+      
+      # Claude function to ensure NVM is loaded
+      claude() {
+        # Load NVM if not already loaded
+        if [ -z "$NVM_DIR" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" 2>/dev/null
+        fi
+        
+        # Use the correct node version
+        nvm use --delete-prefix v24.5.0 --silent 2>/dev/null || true
+        
+        # Execute claude from NVM
+        command "$HOME/.nvm/versions/node/v24.5.0/bin/claude" "$@"
+      }
+    '';
+  };
+  
+  programs.bash = {
+    enable = true;
+    initExtra = ''
+      # Ensure basic system paths are available first
+      # This fixes issues with basic commands not being found
+      export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+      
+      # Claude function to ensure NVM is loaded
+      claude() {
+        # Load NVM if not already loaded
+        if [ -z "$NVM_DIR" ]; then
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" 2>/dev/null
+        fi
+        
+        # Use the correct node version
+        nvm use --delete-prefix v24.5.0 --silent 2>/dev/null || true
+        
+        # Execute claude from NVM
+        command "$HOME/.nvm/versions/node/v24.5.0/bin/claude" "$@"
+      }
+    '';
+  };
 
   # Main Claude configuration using Nix builtins.toJSON
   home.activation.claudeConfig = 
@@ -239,6 +288,7 @@ in
       claudeConfig = {
         version = "1.0.0";
         globalShortcuts = {};
+        # MCP servers will be added by claudeMcpConfig
       };
       
       # Convert to pretty JSON
@@ -248,16 +298,18 @@ in
       # Create Claude configuration directory
       mkdir -p "$HOME/.config/claude"
       
-      # Write the configuration file
+      # Write the configuration file only if it doesn't exist
       CLAUDE_CONFIG_PATH="$HOME/.claude.json"
       
-      # Write the JSON configuration
-      cat > "$CLAUDE_CONFIG_PATH" << 'EOF'
+      if [ ! -f "$CLAUDE_CONFIG_PATH" ]; then
+        # Write the JSON configuration
+        cat > "$CLAUDE_CONFIG_PATH" << 'EOF'
       ${configJson}
       EOF
-      
-      # Make the file writable
-      chmod 644 "$CLAUDE_CONFIG_PATH"
+        
+        # Make the file writable
+        chmod 644 "$CLAUDE_CONFIG_PATH"
+      fi
     '';
 
   # Claude configuration is now handled by the claude-code module in darwin-configuration.nix
@@ -265,53 +317,94 @@ in
   home.activation.claudeMcpConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
     echo "Installing and configuring Claude Code..."
     
+    # Load NVM for Node.js access
+    export NVM_DIR="$HOME/.nvm"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+      \. "$NVM_DIR/nvm.sh" || echo "Warning: Failed to load NVM"
+      
+      # Use default node version if available
+      if [ -f "$NVM_DIR/alias/default" ]; then
+        nvm use default --silent || echo "Warning: Failed to use default node version"
+      fi
+    else
+      echo "Warning: NVM not found at $NVM_DIR"
+    fi
+    
     # Configure npm for global installations
     mkdir -p "$HOME/.npm-global"
     
-    # Use the npm from nix packages
-    NPM_PATH="${pkgs.nodejs_20}/bin/npm"
-    NODE_PATH="${pkgs.nodejs_20}/bin/node"
+    # Use npm from NVM
+    NPM_PATH="$(which npm 2>/dev/null)"
+    NODE_PATH="$(which node 2>/dev/null)"
     
     if [ -x "$NPM_PATH" ]; then
       $NPM_PATH config set prefix "$HOME/.npm-global"
       export PATH="$HOME/.npm-global/bin:$PATH"
       
-      # Claude Code is now installed via nix package
-      echo "Claude Code CLI is installed via nix package"
+      # Claude Code is installed via npm in NVM
+      echo "Claude Code should be installed via npm globally"
     else
       echo "npm not found, skipping Claude Code installation"
     fi
     
+echo "Installing Claude MCP servers..."
+    
+    # Install MCP servers one by one to handle failures gracefully
+    echo "Installing filesystem server..."
+    npm install -g @modelcontextprotocol/server-filesystem@latest || echo "Warning: Failed to install filesystem server"
+    
+    echo "Installing memory server..."
+    npm install -g @modelcontextprotocol/server-memory@latest || echo "Warning: Failed to install memory server"
+    
+    echo "Installing sequential-thinking server..."
+    npm install -g @modelcontextprotocol/server-sequential-thinking@latest || echo "Warning: Failed to install sequential-thinking server"
+    
+    echo "Installing puppeteer server..."
+    npm install -g puppeteer-mcp-server@latest || echo "Warning: Failed to install puppeteer server"
+    
+    echo "Installing playwright server..."
+    npm install -g @playwright/mcp@latest || echo "Warning: Failed to install playwright server"
+    
+    echo "Installing mcp-omnisearch..."
+    npm install -g mcp-omnisearch@latest || echo "Warning: Failed to install mcp-omnisearch"
+    
+    # ruv-swarm might not exist or have issues, so we'll skip it for now
+    # echo "Installing ruv-swarm..."
+    # npm install -g ruv-swarm@latest || echo "Warning: Failed to install ruv-swarm"
+    
     echo "Configuring Claude MCP servers..."
     
-    # Create MCP server configuration
-    MCP_SERVERS=$(cat << 'EOF'
+    # Source the .env file to load API keys
+    if [ -f "/Users/angel/angelsnixconfig/.env" ]; then
+      echo "Loading environment variables from .env file..."
+      set -a  # automatically export all variables
+      source "/Users/angel/angelsnixconfig/.env"
+      set +a
+    else
+      echo "Warning: .env file not found at /Users/angel/angelsnixconfig/.env"
+    fi
+
+    # Create MCP server configuration template
+    cat > /tmp/claude-mcp-template.json << 'MCPEOF'
     {
       "puppeteer": {
         "command": "npx",
-        "args": ["-y", "@puppeteer/mcp-server"]
+        "args": ["-y", "puppeteer-mcp-server"]
       },
       "playwright": {
         "command": "npx",
-        "args": ["-y", "@michaeltliu/mcp-server-playwright"]
+        "args": ["-y", "@playwright/mcp"]
       },
       "mcp-omnisearch": {
         "command": "npx",
         "args": ["-y", "mcp-omnisearch"],
         "env": {
-          "TAVILY_API_KEY": "''${TAVILY_API_KEY}",
-          "BRAVE_API_KEY": "''${BRAVE_API_KEY}",
-          "KAGI_API_KEY": "''${KAGI_API_KEY}",
-          "PERPLEXITY_API_KEY": "''${PERPLEXITY_API_KEY}",
-          "JINA_AI_API_KEY": "''${JINA_AI_API_KEY}",
-          "FIRECRAWL_API_KEY": "''${FIRECRAWL_API_KEY}"
-        }
-      },
-      "claude-flow": {
-        "command": "/Users/angel/Projects/claude-flow/bin/claude-flow",
-        "args": ["mcp", "start", "--transport", "stdio"],
-        "env": {
-          "NODE_ENV": "production"
+          "TAVILY_API_KEY": "$TAVILY_API_KEY",
+          "BRAVE_API_KEY": "$BRAVE_API_KEY",
+          "KAGI_API_KEY": "$KAGI_API_KEY",
+          "PERPLEXITY_API_KEY": "$PERPLEXITY_API_KEY",
+          "JINA_AI_API_KEY": "$JINA_AI_API_KEY",
+          "FIRECRAWL_API_KEY": "$FIRECRAWL_API_KEY"
         }
       },
       "ruv-swarm": {
@@ -334,8 +427,11 @@ in
         "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/angel/Projects", "/Users/angel/Documents", "/Users/angel/.claude", "/tmp"]
       }
     }
-    EOF
-    )
+MCPEOF
+    
+    # Substitute environment variables
+    ENVSUBST_PATH="${pkgs.envsubst}/bin/envsubst"
+    MCP_SERVERS=$("$ENVSUBST_PATH" < /tmp/claude-mcp-template.json)
     
     # Update ~/.claude.json with MCP servers
     JQ_PATH="${pkgs.jq}/bin/jq"
@@ -355,6 +451,19 @@ in
   # Cursor MCP Configuration
   # Create the Cursor MCP configuration file with environment variable support
   home.activation.cursorMcpConfig = config.lib.dag.entryAfter ["writeBoundary"] ''
+    # Load NVM for Node.js access
+    export NVM_DIR="$HOME/.nvm"
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+      \. "$NVM_DIR/nvm.sh" || echo "Warning: Failed to load NVM"
+      
+      # Use default node version if available
+      if [ -f "$NVM_DIR/alias/default" ]; then
+        nvm use default --silent || echo "Warning: Failed to use default node version"
+      fi
+    else
+      echo "Warning: NVM not found at $NVM_DIR"
+    fi
+    
     CURSOR_MCP_PATH="$HOME/.cursor/mcp.json"
     
     # Create .cursor directory if it doesn't exist
@@ -362,6 +471,7 @@ in
     
     # Source the .env file - check multiple locations
     ENV_FILES=(
+        "/Users/angel/angelsnixconfig/.env"
         "/Users/angel/Projects/nix-project/.env"
         "$HOME/.config/nix-project/.env"
         "$HOME/.env"
@@ -383,8 +493,8 @@ in
         echo "Warning: No .env file found in expected locations"
     fi
     
-    # Create the MCP configuration for Cursor
-    cat > "$CURSOR_MCP_PATH" << 'EOF'
+    # Create the MCP configuration template for Cursor
+    cat > /tmp/cursor-mcp-template.json << 'EOF'
     {
       "mcpServers": {
         "filesystem": {
@@ -406,19 +516,12 @@ in
           "command": "npx",
           "args": ["mcp-omnisearch"],
           "env": {
-            "PERPLEXITY_API_KEY": "''${PERPLEXITY_API_KEY:-}",
-            "BRAVE_API_KEY": "''${BRAVE_API_KEY:-}",
-            "TAVILY_API_KEY": "''${TAVILY_API_KEY:-}",
-            "KAGI_API_KEY": "''${KAGI_API_KEY:-}",
-            "JINA_AI_API_KEY": "''${JINA_AI_API_KEY:-}",
-            "FIRECRAWL_API_KEY": "''${FIRECRAWL_API_KEY:-}"
-          }
-        },
-        "claude-flow": {
-          "command": "''${CLAUDE_FLOW_PATH:-/Users/angel/Projects/claude-flow/bin/claude-flow}",
-          "args": ["mcp", "start", "--transport", "stdio"],
-          "env": {
-            "NODE_ENV": "production"
+            "PERPLEXITY_API_KEY": "$PERPLEXITY_API_KEY",
+            "BRAVE_API_KEY": "$BRAVE_API_KEY",
+            "TAVILY_API_KEY": "$TAVILY_API_KEY",
+            "KAGI_API_KEY": "$KAGI_API_KEY",
+            "JINA_AI_API_KEY": "$JINA_AI_API_KEY",
+            "FIRECRAWL_API_KEY": "$FIRECRAWL_API_KEY"
           }
         },
         "ruv-swarm": {
@@ -431,6 +534,10 @@ in
       }
     }
     EOF
+    
+    # Substitute environment variables
+    ENVSUBST_PATH="${pkgs.envsubst}/bin/envsubst"
+    "$ENVSUBST_PATH" < /tmp/cursor-mcp-template.json > "$CURSOR_MCP_PATH"
     
     # Make the file writable
     chmod 644 "$CURSOR_MCP_PATH"
