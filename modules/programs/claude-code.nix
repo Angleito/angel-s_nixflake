@@ -631,55 +631,8 @@ You are a strategic planning expert who creates comprehensive, actionable plans 
     '';
   };
   
-  # MCP server configurations for Claude Code CLI
-  mcpServers = {
-    puppeteer = {
-      command = "npx";
-      args = [ "-y" "@puppeteer/mcp-server" ];
-    };
-    playwright = {
-      command = "npx";
-      args = [ "-y" "@michaeltliu/mcp-server-playwright" ];
-    };
-    "mcp-omnisearch" = {
-      command = "npx";
-      args = [ "-y" "mcp-omnisearch" ];
-      env = {
-        TAVILY_API_KEY = "\${TAVILY_API_KEY}";
-        BRAVE_API_KEY = "\${BRAVE_API_KEY}";
-        KAGI_API_KEY = "\${KAGI_API_KEY}";
-        PERPLEXITY_API_KEY = "\${PERPLEXITY_API_KEY}";
-        JINA_AI_API_KEY = "\${JINA_AI_API_KEY}";
-        FIRECRAWL_API_KEY = "\${FIRECRAWL_API_KEY}";
-      };
-    };
-    "claude-flow" = {
-      command = "/Users/angel/Projects/claude-flow/bin/claude-flow";
-      args = [ "mcp" "start" "--transport" "stdio" ];
-      env = {
-        NODE_ENV = "production";
-      };
-    };
-    "ruv-swarm" = {
-      command = "npx";
-      args = [ "-y" "ruv-swarm" "mcp" "start" ];
-      env = {
-        NODE_ENV = "production";
-      };
-    };
-    "sequential-thinking" = {
-      command = "npx";
-      args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
-    };
-    memory = {
-      command = "npx";
-      args = [ "-y" "@modelcontextprotocol/server-memory" ];
-    };
-    filesystem = {
-      command = "npx";
-      args = [ "-y" "@modelcontextprotocol/server-filesystem" "/Users/angel/Projects" "/Users/angel/Documents" "/Users/angel/.claude" "/tmp" ];
-    };
-  };
+  # MCP servers are now configured globally in the mcp.nix module
+  # This allows MCP servers to be shared across all projects
 
 
   # Claude Code settings configuration
@@ -722,7 +675,7 @@ in {
     environment.systemPackages = with pkgs; [
       python3
       python3Packages.pip
-      nodejs_20  # For npx and MCP servers
+      # Node.js is managed by NVM, not included here
       jq         # For updating JSON configuration
     ];
 
@@ -753,22 +706,7 @@ in {
         ${builtins.toJSON claudeSettings}
         EOF
         
-        # Update claude.json to add MCP servers globally
-        # This preserves existing configuration while adding MCP servers
-        if [ -f "$HOME/.claude.json" ]; then
-          # Use jq to update the existing file, preserving all other settings
-          # Add MCP servers globally for all projects
-          jq '.mcpServers = ${builtins.toJSON mcpServers}' \
-              "$HOME/.claude.json" > "$HOME/.claude.json.tmp" && \
-              mv "$HOME/.claude.json.tmp" "$HOME/.claude.json"
-        else
-          # Create new file if it doesn't exist
-          cat > $HOME/.claude.json << 'EOF'
-          {
-            "mcpServers": ${builtins.toJSON mcpServers}
-          }
-          EOF
-        fi
+        # MCP servers are now configured globally via the mcp.nix module
         
         # Create agent files
         ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: content: ''
@@ -784,11 +722,44 @@ in {
           COMMAND_EOF
         '') commands)}
         
-        # Configure npm for global installations
-        echo "Configuring npm..."
-        mkdir -p "$HOME/.npm-global"
-        npm config set prefix "$HOME/.npm-global"
-        export PATH="$HOME/.npm-global/bin:$PATH"
+        # Load NVM for Node.js access
+        echo "Loading NVM for npm configuration..."
+        export NVM_DIR="$USER_HOME/.nvm"
+        if [ -s "$NVM_DIR/nvm.sh" ]; then
+          # Run as the primary user to ensure proper environment
+          sudo -u $PRIMARY_USER bash -c "
+            export NVM_DIR='$NVM_DIR'
+            [ -s '\$NVM_DIR/nvm.sh' ] && \\. '\$NVM_DIR/nvm.sh'
+            
+            # Use default node version if available
+            if [ -f '\$NVM_DIR/alias/default' ] && command -v nvm >/dev/null 2>&1; then
+              DEFAULT_VERSION=\$(cat '\$NVM_DIR/alias/default')
+              echo 'Setting NVM default version to: '\$DEFAULT_VERSION
+              nvm use \"\$DEFAULT_VERSION\" --silent 2>/dev/null || echo 'Note: Using system Node.js version'
+            else
+              echo 'Note: No default NVM version set or nvm command not available'
+            fi
+            
+            # Check if Node.js is available
+            if command -v node >/dev/null 2>&1; then
+              echo 'Using Node.js version: '\$(node --version 2>/dev/null)
+              echo 'Using npm version: '\$(npm --version 2>/dev/null)
+            else
+              echo 'Warning: Node.js not found in PATH'
+            fi
+          "
+        else
+          echo "Warning: NVM not found, skipping npm configuration"
+        fi
+        
+        # Clean up any existing npm global installation of claude-code
+        echo "Cleaning up any existing npm global installation of @anthropic-ai/claude-code..."
+        sudo -u $PRIMARY_USER bash -c "
+          export NVM_DIR='$NVM_DIR'
+          [ -s '\$NVM_DIR/nvm.sh' ] && \\. '\$NVM_DIR/nvm.sh'
+          npm uninstall -g @anthropic-ai/claude-code 2>/dev/null || true
+          npm uninstall -g claude 2>/dev/null || true
+        "
         
         # Set proper permissions
         chmod -R 755 ${cfg.configDir}
@@ -796,46 +767,64 @@ in {
         chmod 644 ${cfg.configDir}/agents/*.md
         chmod 644 ${cfg.configDir}/commands/*.md
         
-        # Install claude-flow if not already installed
-        if [ ! -d "/Users/angel/Projects/claude-flow" ]; then
-          echo "Installing claude-flow..."
-          cd /Users/angel/Projects
-          git clone https://github.com/Angleito/claude-flow.git || echo "Failed to clone claude-flow"
-          cd claude-flow
-          npm install || echo "Failed to install claude-flow dependencies"
+        # Note: claude-flow should be installed separately, not during system activation
+        if [ -d "/Users/angel/Projects/claude-flow" ]; then
+          echo "claude-flow found at /Users/angel/Projects/claude-flow"
         else
-          echo "claude-flow already installed at /Users/angel/Projects/claude-flow"
+          echo "Note: claude-flow not found. Install it manually if needed:"
+          echo "  cd /Users/angel/Projects"
+          echo "  git clone https://github.com/Angleito/claude-flow.git"
+          echo "  cd claude-flow && npm install"
         fi
         
         # Claude Code is now installed via nix package
         echo "Claude Code CLI is installed via nix package"
         
+        # Verify no global npm installation of claude-code exists
+        sudo -u $PRIMARY_USER bash -c "
+          export NVM_DIR='$NVM_DIR'
+          [ -s '\$NVM_DIR/nvm.sh' ] && \\. '\$NVM_DIR/nvm.sh'
+          if npm list -g @anthropic-ai/claude-code 2>/dev/null | grep -q '@anthropic-ai/claude-code'; then
+            echo 'WARNING: Found global npm installation of @anthropic-ai/claude-code, removing...'
+            npm uninstall -g @anthropic-ai/claude-code --force
+          fi
+        "
+        
         # Install required MCP servers globally (always latest versions)
         echo "Installing MCP servers..."
-        # First uninstall existing versions to ensure we get latest
-        npm uninstall -g @modelcontextprotocol/server-filesystem \
-                         @modelcontextprotocol/server-memory \
-                         @modelcontextprotocol/server-sequential-thinking \
-                         @cloudflare/mcp-server-puppeteer \
-                         @puppeteer/mcp-server \
-                         @michaeltliu/mcp-server-playwright \
-                         mcp-omnisearch \
-                         ruv-swarm 2>/dev/null || true
-        
-        # Install latest versions
-        npm install -g @modelcontextprotocol/server-filesystem@latest \
-                       @modelcontextprotocol/server-memory@latest \
-                       @modelcontextprotocol/server-sequential-thinking@latest \
-                       @puppeteer/mcp-server@latest \
-                       @michaeltliu/mcp-server-playwright@latest \
-                       mcp-omnisearch@latest \
-                       ruv-swarm@latest --force || echo "Some MCP servers failed to install"
+        sudo -u $PRIMARY_USER bash -c "
+          export NVM_DIR='$NVM_DIR'
+          [ -s '\$NVM_DIR/nvm.sh' ] && \\. '\$NVM_DIR/nvm.sh'
+          
+          if command -v npm &> /dev/null; then
+            # First uninstall existing versions to ensure we get latest
+            npm uninstall -g @modelcontextprotocol/server-filesystem \
+                             @modelcontextprotocol/server-memory \
+                             @modelcontextprotocol/server-sequential-thinking \
+                             @cloudflare/mcp-server-puppeteer \
+                             @puppeteer/mcp-server \
+                             @michaeltliu/mcp-server-playwright \
+                             mcp-omnisearch \
+                             ruv-swarm 2>/dev/null || true
+            
+            # Install latest versions
+            npm install -g @modelcontextprotocol/server-filesystem@latest \
+                           @modelcontextprotocol/server-memory@latest \
+                           @modelcontextprotocol/server-sequential-thinking@latest \
+                           @puppeteer/mcp-server@latest \
+                           @michaeltliu/mcp-server-playwright@latest \
+                           mcp-omnisearch@latest \
+                           ruv-swarm@latest --force || echo 'Some MCP servers failed to install'
+          else
+            echo 'npm not found, skipping MCP server installation'
+          fi
+        "
         
         echo "Claude Code configuration complete!"
       '';
     };
     
-    # Claude is already available via npm global install
-    # No need to add wrapper alias
+    # Claude Code is managed by Nix, not npm
+    # The nix package provides the 'claude' command directly
   };
 }
