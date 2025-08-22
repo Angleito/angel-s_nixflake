@@ -114,6 +114,13 @@
             MAX_CONCURRENT_REQUESTS = "5";
           };
         };
+        "hrm-reasoning" = {
+          command = "uv";
+          args = [ "run" "--project" "/Users/angel/Projects/hrmmcp" "python" "-m" "src.hrm_mcp_server" ];
+          env = {
+            PYTHONPATH = "/Users/angel/Projects/hrmmcp";
+          };
+        };
       };
     };
     git-env.enable = true;
