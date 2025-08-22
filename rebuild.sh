@@ -80,7 +80,14 @@ case "$PLATFORM" in
         # Detect configuration name (default to "angel")
         CONFIG_NAME="${NIX_CONFIG_NAME:-angel}"
         echo -e "${BLUE}🍎 Using Darwin configuration: $CONFIG_NAME${NC}"
-        sudo -E darwin-rebuild switch --flake ".#$CONFIG_NAME" "$@"
+        
+        # Find darwin-rebuild in nix store or use nix run
+        if command -v darwin-rebuild &> /dev/null; then
+            sudo -E darwin-rebuild switch --flake ".#$CONFIG_NAME" "$@"
+        else
+            # Use nix run to execute darwin-rebuild
+            sudo -E nix run nix-darwin -- switch --flake ".#$CONFIG_NAME" "$@"
+        fi
         ;;
     nixos)
         # Detect hostname for configuration selection

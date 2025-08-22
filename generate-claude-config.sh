@@ -164,7 +164,6 @@ else
   echo "JSON validation error occurred on $(date)" >> /tmp/claude_config_errors.log
   rm "$MAIN_CONFIG"
 fi
-EOF
 
 # Generate settings.json
 SETTINGS_CONFIG=$(mktemp)

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   # Set the primary user (required for the options below)
@@ -6,8 +6,10 @@
   
   # Nix configuration
   nix = {
-    package = pkgs.nix;
-    settings.experimental-features = "nix-command flakes";
+    # Disable nix-darwin's management for Determinate compatibility
+    enable = false;
+    # package = pkgs.nix;
+    # settings.experimental-features = "nix-command flakes";
   };
 
   # Set your username
@@ -19,286 +21,133 @@
   # Set nixbld group ID to match existing installation
   ids.gids.nixbld = 350;
 
-  # System packages
+  # Core system packages
   environment.systemPackages = with pkgs; [
     vim
     git
     curl
     wget
-    nodejs_20  # Include Node.js for npm
-    rustup     # Rust toolchain for Sui CLI and other Rust tools
-    claude-code   # NEW – install from nixpkgs instead of npm
+    # claude-code is installed via npm/NVM, not as a Nix package
   ];
-  
-  # Power management settings - prevent display from turning off
-  system.activationScripts.powerManagement.text = ''
-    echo "Configuring power management settings..."
-    
-    # Prevent display from sleeping (0 = never)
-    pmset -a displaysleep 0
-    
-    # Prevent system from sleeping when on AC power (0 = never)
-    pmset -c sleep 0
-    
-    # Prevent disk from sleeping
-    pmset -a disksleep 0
-    
-    # Keep the system awake when the display is off
-    pmset -a powernap 0
-    
-    # Prevent automatic sleep when on AC power
-    pmset -c autopoweroff 0
-    
-    # Optional: Keep display awake even when system is idle
-    pmset -a lessbright 0
-    
-    echo "Power management settings configured"
-  '';
-  
-  # Install Xcode Command Line Tools if not already installed
-  system.activationScripts.xcodeTools.text = ''
-    if ! xcode-select -p &> /dev/null; then
-      echo "Installing Xcode Command Line Tools..."
-      touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
-      PROD=$(softwareupdate -l | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^:]*: //')
-      if [ -n "$PROD" ]; then
-        softwareupdate -i "$PROD" --verbose
-      else
-        echo "Could not find Xcode Command Line Tools in software update catalog"
-        echo "You may need to install manually with: xcode-select --install"
-      fi
-      rm -f /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
-    else
-      echo "Xcode Command Line Tools already installed"
-    fi
-  '';
-  
-  # System-wide npm configuration for other CLI tools
-  system.activationScripts.postActivation.text = ''
-    # Source the Nix environment to ensure all tools are available
-    # shellcheck disable=SC1091
-    source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-    
-    # Set up dynamic paths
-    USER_HOME="${config.users.users.${config.system.primaryUser}.home}"
-    NPM_BIN="${pkgs.nodejs_20}/bin/npm"
-    
-    # Create npm global directory for the primary user
-    sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.npm-global"
-    sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.npm-cache"
-    
-    # Note: npm configuration moved to user-level to avoid permission issues
-    # Users can configure npm manually with:
-    # npm config set prefix ~/.npm-global
-    # npm config set cache ~/.npm-cache
-    
-    # Install Sui CLI with improved dependency checking
-    if ! command -v sui &> /dev/null; then
-      echo "Installing Sui CLI..."
-      
-      # First, ensure cargo is available by initializing rustup
-      if ! sudo -u ${config.system.primaryUser} bash -c "source $USER_HOME/.cargo/env 2>/dev/null && command -v cargo" &> /dev/null; then
-        echo "Initializing Rust toolchain..."
-        # Set up rustup environment for the user
-        sudo -u ${config.system.primaryUser} bash -c "
-          export HOME=$USER_HOME
-          export RUSTUP_HOME=$USER_HOME/.rustup
-          export CARGO_HOME=$USER_HOME/.cargo
-          mkdir -p $USER_HOME/.rustup $USER_HOME/.cargo $USER_HOME/.cargo/bin
-          ${pkgs.rustup}/bin/rustup toolchain install stable
-          ${pkgs.rustup}/bin/rustup default stable
-          # Create symlinks to make rustc available
-          ln -sf \$RUSTUP_HOME/toolchains/stable-aarch64-apple-darwin/bin/* $USER_HOME/.cargo/bin/
-          # Configure git to use HTTPS instead of SSH for cargo
-          ${pkgs.git}/bin/git config --global url.'https://github.com/'.insteadOf 'git@github.com:'
-        "
-        
-        # Verify cargo is now available
-        if ! sudo -u ${config.system.primaryUser} bash -c "export HOME=$USER_HOME; export CARGO_HOME=$USER_HOME/.cargo; ${pkgs.rustup}/bin/cargo --version" &> /dev/null; then
-          echo "Warning: Cargo initialization may have failed. Falling back to npm installation."
-        fi
-      fi
-      
-      # Install Sui using cargo (Rust package manager) with better error handling
-      if sudo -u ${config.system.primaryUser} bash -c "
-        export HOME=$USER_HOME
-        export RUSTUP_HOME=$USER_HOME/.rustup
-        export CARGO_HOME=$USER_HOME/.cargo
-        export PATH=$USER_HOME/.cargo/bin:\$PATH
-        ${pkgs.rustup}/bin/cargo --version
-      " &> /dev/null; then
-        echo "Installing Sui CLI via cargo..."
-        if sudo -u ${config.system.primaryUser} bash -c "
-          export HOME=$USER_HOME
-          export RUSTUP_HOME=$USER_HOME/.rustup
-          export CARGO_HOME=$USER_HOME/.cargo
-          export PATH=$USER_HOME/.cargo/bin:\$PATH
-          ${pkgs.rustup}/bin/cargo install --locked --git https://github.com/MystenLabs/sui.git --branch testnet sui
-        "; then
-          echo "Sui CLI installed successfully via cargo!"
-        else
-          echo "Cargo installation failed. Falling back to npm..."
-          sudo -u ${config.system.primaryUser} bash -c "
-            export HOME=$USER_HOME
-            export NPM_CONFIG_PREFIX=$USER_HOME/.npm-global
-            export NPM_CONFIG_CACHE=$USER_HOME/.npm-cache
-            $NPM_BIN install -g @mysten/sui
-          "
-        fi
-      else
-        echo "Cargo not available. Installing Sui via npm as fallback..."
-        sudo -u ${config.system.primaryUser} bash -c "
-          export HOME=$USER_HOME
-          export NPM_CONFIG_PREFIX=$USER_HOME/.npm-global
-          export NPM_CONFIG_CACHE=$USER_HOME/.npm-cache
-          $NPM_BIN install -g @mysten/sui
-        "
-      fi
-    else
-      echo "Sui CLI is already installed"
-    fi
-    
-    # Install Walrus CLI
-    if ! command -v walrus &> /dev/null; then
-      echo "Installing Walrus CLI..."
-      # Check the architecture and download appropriate binary
-      ARCH=$(uname -m)
-      if [ "$ARCH" = "arm64" ]; then
-        WALRUS_ARCH="arm64"
-      else
-        WALRUS_ARCH="x86_64"
-      fi
-      
-      # Download Walrus binary for macOS using dynamic curl path
-      echo "Downloading Walrus CLI for macOS $WALRUS_ARCH..."
-      ${pkgs.curl}/bin/curl -L "https://github.com/MystenLabs/walrus-sites/releases/latest/download/site-builder-macos-$WALRUS_ARCH" -o /tmp/walrus
-      
-      # Make it executable and move to local bin
-      chmod +x /tmp/walrus
-      sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.local/bin"
-      mv /tmp/walrus "$USER_HOME/.local/bin/walrus"
-      chown ${config.system.primaryUser}:staff "$USER_HOME/.local/bin/walrus"
-      
-      # Configure Walrus for testnet
-      echo "Configuring Walrus for testnet..."
-      sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.config/walrus"
-      cat > /tmp/walrus-config.yaml << 'EOF'
-system_object: 0x70a61a5cf43b2c00aacf57e6784f5c8a09b4dd68de16f96b7c5a3bb5c3c8c04e5
-storage_nodes:
-  - name: wal-devnet-0
-    rpc_url: https://rpc-walrus-testnet.nodes.guru:443
-    rest_url: https://storage.testnet.sui.walrus.site/v1
-  - name: wal-devnet-1
-    rpc_url: https://walrus-testnet-rpc.bartestnet.com
-    rest_url: https://walrus-testnet-storage.bartestnet.com/v1
-  - name: wal-devnet-2
-    rpc_url: https://walrus-testnet.blockscope.net
-    rest_url: https://walrus-testnet-storage.blockscope.net/v1
-  - name: wal-devnet-3
-    rpc_url: https://walrus-testnet-rpc.nodes.guru
-    rest_url: https://walrus-testnet-storage.nodes.guru/v1
-  - name: wal-devnet-4
-    rpc_url: https://walrus.testnet.arcadia.global
-    rest_url: https://walrus-storage.testnet.arcadia.global/v1
-EOF
-      sudo -u ${config.system.primaryUser} mv /tmp/walrus-config.yaml "$USER_HOME/.config/walrus/client_config.yaml"
-      
-      echo "Walrus CLI installed and configured for testnet!"
-    else
-      echo "Walrus CLI is already installed"
-    fi
-    
-    # Install Vercel CLI globally
-    if ! command -v vercel &> /dev/null; then
-      echo "Installing Vercel CLI..."
-      sudo -u ${config.system.primaryUser} bash -c "
-        export HOME=\$USER_HOME
-        export NPM_CONFIG_PREFIX=\$USER_HOME/.npm-global
-        export NPM_CONFIG_CACHE=\$USER_HOME/.npm-cache
-        \$NPM_BIN install -g vercel
-      "
-    else
-      echo "Vercel CLI is already installed"
-    fi
-  '';
 
-  # Homebrew configuration
-  homebrew = {
-    enable = true;
-    
-    # Keep Homebrew up to date
-    onActivation = {
-      autoUpdate = true;
-      cleanup = "zap"; # Remove unused formulae and casks
-      upgrade = true;
+  # Import modules
+  imports = [
+    ./modules/default.nix
+  ];
+
+  # Module configurations
+  development = {
+    rust.enable = true;
+    nodejs.enable = true;
+    web3 = {
+      enable = true;
+      enableSui = true;     # Using cargo installation
+      enableWalrus = true;  # Using cargo installation
+      enableVercel = true;
+      useCargoInstall = true; # New flag to use cargo instead of nix packages
     };
-    
-    # Taps - removed deprecated/unnecessary taps
-    taps = [
-      # homebrew/core and homebrew/cask are now built-in and don't need to be tapped
-      # homebrew/services has been deprecated
-    ];
-    
-    # Homebrew formulae (CLI tools)
-    brews = [
-      "mas" # Mac App Store CLI
-    ];
-    
-    # Homebrew casks (GUI applications)
-    casks = [
-      "warp"           # Warp terminal
-      "cursor"         # Cursor AI editor
-      "brave-browser"  # Brave browser
-      "orbstack"       # Docker/container management
-      "zoom"           # Zoom video conferencing
-      "slack"          # Slack messaging
-    ];
-    
-    # Mac App Store apps (requires 'mas' brew)
-    masApps = {
-      # "App Name" = App_ID;
-      # To find App IDs, use: mas search "app name"
-      "GarageBand" = 682658836;
+    database = {
+      enable = true;
+      postgresql.enable = true;
+      postgresql.version = "14";
+    };
+  };
+  
+  # Program configurations
+  programs = {
+    claude-code = {
+      enable = true;
+      configDir = "$HOME/.claude";
+      scriptsDir = "$HOME/.claude/scripts";
+      enableMcpServers = true;
+    };
+    mcp = {
+      enable = true;
+      servers = {
+        puppeteer = {
+          command = "npx";
+          args = [ "-y" "@puppeteer/mcp-server" ];
+        };
+        playwright = {
+          command = "npx";
+          args = [ "-y" "@michaeltliu/mcp-server-playwright" ];
+        };
+        "claude-flow" = {
+          command = "/Users/angel/Projects/claude-flow/bin/claude-flow";
+          args = [ "mcp" "start" "--transport" "stdio" ];
+          env = {
+            NODE_ENV = "production";
+          };
+        };
+        "ruv-swarm" = {
+          command = "npx";
+          args = [ "-y" "ruv-swarm" "mcp" "start" ];
+          env = {
+            NODE_ENV = "production";
+          };
+        };
+        "sequential-thinking" = {
+          command = "npx";
+          args = [ "-y" "@modelcontextprotocol/server-sequential-thinking" ];
+        };
+        memory = {
+          command = "npx";
+          args = [ "-y" "@modelcontextprotocol/server-memory" ];
+        };
+        filesystem = {
+          command = "npx";
+          args = [ "-y" "@modelcontextprotocol/server-filesystem" "/Users/angel/Projects" "/Users/angel/Documents" "/Users/angel/.claude" "/tmp" ];
+        };
+        "qdrant-code-search" = {
+          command = "$HOME/.local/share/mcp-servers/qdrant-code-search/venv/bin/python";
+          args = [ "$HOME/.local/share/mcp-servers/qdrant-code-search/server.py" ];
+          env = {
+            QDRANT_URL = "http://localhost:6333";
+            EMBEDDING_MODEL = "openai/text-embedding-3-large";  # Better quality
+            COLLECTION_PREFIX = "claude-code";
+            VECTOR_SIZE = "3072";  # Matches text-embedding-3-large
+            CHUNK_SIZE = "1000";
+            SEARCH_LIMIT = "10";
+            SIMILARITY_THRESHOLD = "0.7";
+            OPENAI_API_KEY = "";  # To be set by user
+            BATCH_SIZE = "50";
+            MAX_CONCURRENT_REQUESTS = "5";
+          };
+        };
+      };
+    };
+    git-env.enable = true;
+    cursor.enable = true;
+    orbstack = {
+      enable = true;
+      dockerCompat = true;
+      shellAliases = true;
+      dockerSocketSymlink = true;
     };
   };
 
-  # macOS system defaults
-  system.defaults = {
-    # Dock settings
-    dock = {
-      autohide = false; # Keep dock visible
-      show-recents = false;
-      minimize-to-application = true;
-      mru-spaces = false; # Don't rearrange spaces
+  system = {
+    power = {
+      preventDisplaySleep = true;
+      preventSystemSleep = true;
+      preventDiskSleep = true;
     };
-    
-    # Finder settings
-    finder = {
-      AppleShowAllExtensions = true;
-      ShowPathbar = true;
-      ShowStatusBar = true;
-      FXEnableExtensionChangeWarning = false;
+    xcode.autoInstall = true;
+    environment = {
+      enableEnvManagement = true;
+      defaultVariables = {
+        EDITOR = "vim";
+        PAGER = "less";
+        BROWSER = "open";
+      };
     };
-    
-    # Trackpad settings
-    trackpad = {
-      Clicking = true; # Tap to click
-      TrackpadThreeFingerDrag = true;
-    };
-    
-    # Other macOS settings
-    NSGlobalDomain = {
-      AppleKeyboardUIMode = 3; # Full keyboard access
-      ApplePressAndHoldEnabled = false; # Key repeat
-      InitialKeyRepeat = 15;
-      KeyRepeat = 2;
-      NSAutomaticCapitalizationEnabled = false;
-      NSAutomaticDashSubstitutionEnabled = false;
-      NSAutomaticPeriodSubstitutionEnabled = false;
-      NSAutomaticQuoteSubstitutionEnabled = false;
-      NSAutomaticSpellingCorrectionEnabled = false;
+    autoUpdate = {
+      enable = true;
+      interval = "daily";  # Options: daily, weekly, monthly
     };
   };
+
+  applications.homebrew.enable = true;
 
   # Used for backwards compatibility
   system.stateVersion = 4;

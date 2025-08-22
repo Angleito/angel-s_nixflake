@@ -79,6 +79,32 @@ in
           echo ""
         fi
         
+        # Update Claude Code
+        CLAUDE_UPDATE_SCRIPT="${config.users.users.angel.home}/angelsnixconfig/pkgs/claude-code/update-version.sh"
+        if [ -f "$CLAUDE_UPDATE_SCRIPT" ]; then
+          echo "📦 Checking for Claude Code updates..."
+          cd "${config.users.users.angel.home}/angelsnixconfig"
+          
+          # Run the update script and capture its output
+          UPDATE_OUTPUT=$(bash "$CLAUDE_UPDATE_SCRIPT" 2>&1)
+          echo "$UPDATE_OUTPUT"
+          
+          # Check if an update was applied (script exits with 0 even if no update)
+          if echo "$UPDATE_OUTPUT" | grep -q "Successfully updated default.nix"; then
+            echo "🔨 New Claude Code version detected, rebuilding Darwin configuration..."
+            
+            # Commit the changes
+            git add pkgs/claude-code/default.nix
+            LATEST_VERSION=$(echo "$UPDATE_OUTPUT" | grep -oE "New version available: [0-9.]+ → ([0-9.]+)" | sed -E 's/.*→ ([0-9.]+)/\1/')
+            git commit -m "auto-update: claude-code → $LATEST_VERSION" || true
+            
+            # Rebuild Darwin configuration
+            darwin-rebuild switch --flake .
+            echo "✅ Claude Code updated and Darwin configuration rebuilt"
+          fi
+          echo ""
+        fi
+        
         # Update nix flake
         if [ -f "${config.users.users.angel.home}/Projects/nix-project/flake.nix" ]; then
           echo "📦 Updating nix flake..."
@@ -95,7 +121,7 @@ in
     # Create launchd service for automatic updates
     launchd.agents.update-packages = {
       script = ''
-        export PATH="${pkgs.nodejs_20}/bin:${pkgs.python3}/bin:${pkgs.ruby}/bin:$PATH"
+        export PATH="${pkgs.nodejs_20}/bin:${pkgs.python3}/bin:${pkgs.ruby}/bin:${pkgs.git}/bin:${pkgs.bash}/bin:${pkgs.nix}/bin:/run/current-system/sw/bin:$PATH"
         
         # Update Homebrew and all packages
         if command -v brew &> /dev/null; then
@@ -138,6 +164,31 @@ in
           gem update
           gem cleanup
           echo "✅ gem packages updated"
+        fi
+        
+        # Update Claude Code
+        CLAUDE_UPDATE_SCRIPT="${config.users.users.angel.home}/angelsnixconfig/pkgs/claude-code/update-version.sh"
+        if [ -f "$CLAUDE_UPDATE_SCRIPT" ]; then
+          echo "📦 Checking for Claude Code updates..."
+          cd "${config.users.users.angel.home}/angelsnixconfig"
+          
+          # Run the update script and capture its output
+          UPDATE_OUTPUT=$(bash "$CLAUDE_UPDATE_SCRIPT" 2>&1)
+          echo "$UPDATE_OUTPUT"
+          
+          # Check if an update was applied
+          if echo "$UPDATE_OUTPUT" | grep -q "Successfully updated default.nix"; then
+            echo "🔨 New Claude Code version detected, rebuilding Darwin configuration..."
+            
+            # Commit the changes
+            git add pkgs/claude-code/default.nix
+            LATEST_VERSION=$(echo "$UPDATE_OUTPUT" | grep -oE "New version available: [0-9.]+ → ([0-9.]+)" | sed -E 's/.*→ ([0-9.]+)/\1/')
+            git commit -m "auto-update: claude-code → $LATEST_VERSION" || true
+            
+            # Rebuild Darwin configuration
+            darwin-rebuild switch --flake .
+            echo "✅ Claude Code updated and Darwin configuration rebuilt"
+          fi
         fi
         
         echo "✨ All package managers updated!"

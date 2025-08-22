@@ -1,4 +1,4 @@
-{ lib, pkgs }:
+{ lib, pkgs, ... }:
 
 {
   # Platform detection helpers

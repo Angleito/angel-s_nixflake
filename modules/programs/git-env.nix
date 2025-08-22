@@ -65,13 +65,15 @@ in
     # Add the update script to system packages
     environment.systemPackages = [ updateGitConfigScript ];
     
-    # Create a launchd service to update git config on login
-    launchd.user.agents.git-env-update = {
-      serviceConfig = {
-        ProgramArguments = [ "${updateGitConfigScript}/bin/update-git-config" ];
-        RunAtLoad = true;
-        StandardOutPath = "/tmp/git-env-update.log";
-        StandardErrorPath = "/tmp/git-env-update.log";
+    # Create a launchd service to update git config on login (Darwin only)
+    launchd = mkIf pkgs.stdenv.isDarwin {
+      user.agents.git-env-update = {
+        serviceConfig = {
+          ProgramArguments = [ "${updateGitConfigScript}/bin/update-git-config" ];
+          RunAtLoad = true;
+          StandardOutPath = "/tmp/git-env-update.log";
+          StandardErrorPath = "/tmp/git-env-update.log";
+        };
       };
     };
   };

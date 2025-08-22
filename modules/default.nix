@@ -15,6 +15,7 @@
     # Program modules (cross-platform)
     ./programs/git-env.nix
     ./programs/claude-code.nix
+    ./programs/mcp.nix
     
     # Darwin-specific modules
     ./system/power.nix
@@ -22,5 +23,6 @@
     ./system/auto-update.nix
     ./programs/cursor.nix
     ./applications/homebrew.nix
+    ./applications/orbstack.nix
   ];
 }

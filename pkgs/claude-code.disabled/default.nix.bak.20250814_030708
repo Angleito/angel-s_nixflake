@@ -1,0 +1,53 @@
+{ lib
+, stdenv
+, fetchurl
+, makeWrapper
+, nodejs_20
+, unzip
+}:
+
+stdenv.mkDerivation rec {
+  pname = "claude-code";
+  # Version is automatically managed by ./update-version.sh
+  # Run the script to check for and apply updates
+  version = "1.0.77";
+
+  src = fetchurl {
+    url = "https://registry.npmjs.org/@anthropic-ai/claude-code/-/claude-code-${version}.tgz";
+    sha256 = "sha256-Eits7Cw1TdkjoTITVHXVTYF4jwYBPG7l3WEQCxE08Bw=";
+  };
+
+  nativeBuildInputs = [ makeWrapper ];
+  buildInputs = [ nodejs_20 ];
+
+  unpackPhase = ''
+    tar -xzf $src
+  '';
+
+  installPhase = ''
+    mkdir -p $out/lib/node_modules/@anthropic-ai/claude-code
+    cp -r package/* $out/lib/node_modules/@anthropic-ai/claude-code/
+    
+    # Create bin directory
+    mkdir -p $out/bin
+    
+    # Create wrapper script with --dangerously-skip-permissions
+    makeWrapper ${nodejs_20}/bin/node $out/bin/claude \
+      --add-flags "$out/lib/node_modules/@anthropic-ai/claude-code/cli.js" \
+      --add-flags "--dangerously-skip-permissions" \
+      --prefix PATH : ${lib.makeBinPath [ nodejs_20 ]}
+    
+    # Make cli.js executable
+    chmod +x $out/lib/node_modules/@anthropic-ai/claude-code/cli.js
+  '';
+
+  passthru.updateScript = ./update-version.sh;
+
+  meta = with lib; {
+    description = "Agentic coding tool that lives in your terminal";
+    homepage = "https://github.com/anthropics/claude-code";
+    license = licenses.mit;
+    maintainers = [];
+    platforms = platforms.all;
+  };
+}

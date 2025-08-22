@@ -41,8 +41,8 @@ in
     # Environment variables
     environment.variables = mkMerge [
       {
-        # OrbStack Docker socket location
-        DOCKER_HOST = mkDefault "unix:///var/run/orbstack.sock";
+        # OrbStack uses the standard Docker socket location, so we don't need to set DOCKER_HOST
+        # DOCKER_HOST = mkDefault "unix:///var/run/orbstack.sock";  # Removed - OrbStack uses /var/run/docker.sock
         
         # Add OrbStack xbin to PATH
         PATH = mkBefore "/Applications/OrbStack.app/Contents/MacOS/xbin";
@@ -79,34 +79,33 @@ in
         sudo rm -f /var/run/docker.sock
       fi
       
-      # Check if OrbStack socket exists
-      if [ -S /var/run/orbstack.sock ]; then
-        echo "Found OrbStack socket at /var/run/orbstack.sock"
+      # OrbStack creates its socket at ~/.orbstack/run/docker.sock
+      # and the system creates a symlink at /var/run/docker.sock
+      if [ -S "$HOME/.orbstack/run/docker.sock" ]; then
+        echo "Found OrbStack socket in user directory"
         
-        # Create symlink from docker.sock to orbstack.sock
-        sudo ln -sf /var/run/orbstack.sock /var/run/docker.sock
+        # Check if symlink already exists and points to the right place
+        if [ -L /var/run/docker.sock ] && [ "$(readlink /var/run/docker.sock)" = "$HOME/.orbstack/run/docker.sock" ]; then
+          echo "Docker socket symlink already correctly configured"
+        else
+          # Create or update symlink
+          sudo ln -sf "$HOME/.orbstack/run/docker.sock" /var/run/docker.sock
+          echo "Created/updated Docker socket symlink"
+        fi
         
         # Ensure proper permissions on the socket
-        # OrbStack should manage the actual socket permissions, but we ensure the symlink is accessible
         sudo chmod 755 /var/run
         
         # Verify the symlink
         if [ -L /var/run/docker.sock ]; then
-          echo "Successfully created Docker socket symlink:"
+          echo "Successfully configured Docker socket:"
           ls -la /var/run/docker.sock
         else
           echo "ERROR: Failed to create Docker socket symlink"
         fi
       else
-        echo "OrbStack socket not found at /var/run/orbstack.sock"
+        echo "OrbStack socket not found at $HOME/.orbstack/run/docker.sock"
         echo "Please ensure OrbStack is installed and running"
-        
-        # Alternative: Check for OrbStack socket in user directory
-        if [ -S "$HOME/.orbstack/run/docker.sock" ]; then
-          echo "Found OrbStack socket in user directory, creating symlink..."
-          sudo ln -sf "$HOME/.orbstack/run/docker.sock" /var/run/docker.sock
-          echo "Created fallback symlink from user directory"
-        fi
       fi
     '';
 
@@ -120,23 +119,16 @@ in
             # Ensure /var/run directory exists
             mkdir -p /var/run
             
-            # Primary check: OrbStack socket at standard location
-            if [ -S /var/run/orbstack.sock ]; then
+            # OrbStack only uses ~/.orbstack/run/docker.sock
+            if [ -S "$HOME/.orbstack/run/docker.sock" ]; then
               # Only recreate symlink if it doesn't exist or points to wrong location
-              if [ ! -L /var/run/docker.sock ] || [ "$(readlink /var/run/docker.sock)" != "/var/run/orbstack.sock" ]; then
-                rm -f /var/run/docker.sock
-                ln -sf /var/run/orbstack.sock /var/run/docker.sock
-                echo "$(date): Updated Docker socket symlink to point to /var/run/orbstack.sock"
-              fi
-            # Fallback: Check user directory for OrbStack socket
-            elif [ -S "$HOME/.orbstack/run/docker.sock" ]; then
               if [ ! -L /var/run/docker.sock ] || [ "$(readlink /var/run/docker.sock)" != "$HOME/.orbstack/run/docker.sock" ]; then
                 rm -f /var/run/docker.sock
                 ln -sf "$HOME/.orbstack/run/docker.sock" /var/run/docker.sock
-                echo "$(date): Updated Docker socket symlink to point to user directory"
+                echo "$(date): Updated Docker socket symlink to point to OrbStack socket"
               fi
             else
-              echo "$(date): OrbStack socket not found at expected locations"
+              echo "$(date): OrbStack socket not found at $HOME/.orbstack/run/docker.sock"
             fi
           ''
         ];

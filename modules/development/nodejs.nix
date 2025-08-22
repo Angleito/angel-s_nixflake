@@ -6,30 +6,46 @@
   };
 
   config = lib.mkIf config.development.nodejs.enable {
-    # Install Node.js and npm packages
+    # Only install bun - Node.js is managed by NVM
     environment.systemPackages = with pkgs; [
-      nodejs_20
       bun
     ];
 
-    # Set up npm global directories and install web dev tools
+    # Set up npm global directories and install web dev tools using NVM
     system.activationScripts.npmSetup.text = ''
       USER_HOME="${config.users.users.${config.system.primaryUser}.home}"
       
-      # Create npm global directories
-      sudo -u ${config.system.primaryUser} mkdir -p "$USER_HOME/.npm-global" "$USER_HOME/.npm-cache"
+      # Load NVM before running any Node.js commands
+      echo "Loading NVM for npm setup..."
+      source "$USER_HOME/angelsnixconfig/scripts/load-nvm.sh"
       
-      # Configure npm for user
+      # Run as the primary user with NVM loaded
       sudo -u ${config.system.primaryUser} bash -c "
         export HOME=$USER_HOME
-        ${pkgs.nodejs_20}/bin/npm config set prefix $USER_HOME/.npm-global
-        ${pkgs.nodejs_20}/bin/npm config set cache $USER_HOME/.npm-cache
-      "
-      
-      # Install web development tools globally with bun
-      sudo -u ${config.system.primaryUser} bash -c "
-        export HOME=$USER_HOME
-        export PATH=$USER_HOME/.npm-global/bin:$PATH
+        
+        # Load NVM
+        export NVM_DIR=\"$USER_HOME/.nvm\"
+        [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"
+        
+        # Use default node version if available
+        if [ -f \"\$NVM_DIR/alias/default\" ]; then
+          nvm use default --silent
+        fi
+        
+        # Verify Node.js is available
+        if ! command -v node &> /dev/null; then
+          echo \"Error: Node.js not found via NVM\";
+          exit 1
+        fi
+        
+        echo \"Using Node.js version: \$(node --version)\";
+        echo \"Using npm version: \$(npm --version)\";
+        
+        # Get NVM's global npm directory
+        NPM_GLOBAL_DIR=\"\$(npm config get prefix)/lib/node_modules\"
+        NPM_BIN_DIR=\"\$(npm config get prefix)/bin\"
+        echo \"NVM npm global directory: \$NPM_GLOBAL_DIR\"
+        echo \"NVM npm bin directory: \$NPM_BIN_DIR\"
         
         # Install global web dev tools
         ${pkgs.bun}/bin/bun install -g vite@latest
@@ -52,27 +68,46 @@
         ${pkgs.bun}/bin/bun install -g http-server@latest
         ${pkgs.bun}/bin/bun install -g live-server@latest
         
-        # Install MCP servers globally
-        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-filesystem@latest
-        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-memory@latest
-        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-puppeteer@latest
-        ${pkgs.nodejs_20}/bin/npm install -g @modelcontextprotocol/server-sequential-thinking@latest
-        ${pkgs.nodejs_20}/bin/npm install -g @microsoft/mcp-server-playwright@latest
-        ${pkgs.nodejs_20}/bin/npm install -g mcp-omnisearch@latest
+        # Install claude-code-router
+        ${pkgs.bun}/bin/bun install -g @tehreet/claude-code-router@latest
+        ${pkgs.bun}/bin/bun install -g @musistudio/claude-code-router@latest
         
+        # Install MCP servers globally using NVM's npm
+        npm install -g @modelcontextprotocol/server-filesystem@latest || echo \"Failed to install server-filesystem\"
+        npm install -g @modelcontextprotocol/server-memory@latest || echo \"Failed to install server-memory\"
+        npm install -g @modelcontextprotocol/server-puppeteer@latest || echo \"Failed to install server-puppeteer\"
+        npm install -g @modelcontextprotocol/server-sequential-thinking@latest || echo \"Failed to install server-sequential-thinking\"
+        npm install -g @microsoft/mcp-server-playwright@latest || echo \"Failed to install mcp-server-playwright\"
+        npm install -g mcp-omnisearch@latest || echo \"Failed to install mcp-omnisearch\"
+
         # Create symlinks in ~/.local/bin for easy access
-        mkdir -p $USER_HOME/.local/bin
-        ln -sf $USER_HOME/.npm-global/bin/vite $USER_HOME/.local/bin/vite 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/create-vite $USER_HOME/.local/bin/create-vite 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/create-next-app $USER_HOME/.local/bin/create-next-app 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/tailwindcss $USER_HOME/.local/bin/tailwindcss 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/tsc $USER_HOME/.local/bin/tsc 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/tsx $USER_HOME/.local/bin/tsx 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/eslint $USER_HOME/.local/bin/eslint 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/prettier $USER_HOME/.local/bin/prettier 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/serve $USER_HOME/.local/bin/serve 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/http-server $USER_HOME/.local/bin/http-server 2>/dev/null || true
-        ln -sf $USER_HOME/.npm-global/bin/live-server $USER_HOME/.local/bin/live-server 2>/dev/null || true
+        # This runs after npm packages are installed and before PATH is set up
+        echo "Managing npm symlinks..."
+        
+        # Use the new symlink management script
+        if [ -f "$USER_HOME/angelsnixconfig/scripts/manage-npm-symlinks.sh" ]; then
+          bash "$USER_HOME/angelsnixconfig/scripts/manage-npm-symlinks.sh"
+        else
+          # Fallback to inline symlink creation if script is not found
+          echo "Warning: manage-npm-symlinks.sh not found, using fallback method"
+          
+          mkdir -p $USER_HOME/.local/bin
+          
+          # Use NVM's npm bin directory
+          if [ -d "\$NPM_BIN_DIR" ]; then
+            for executable in \"\$NPM_BIN_DIR\"/*; do
+              if [ -f "$executable" ] && [ -x "$executable" ]; then
+                exec_name=$(basename "$executable")
+                target_link="$USER_HOME/.local/bin/$exec_name"
+                
+                if [ ! -e "$target_link" ]; then
+                  echo "Creating symlink: $exec_name"
+                  ln -sf "$executable" "$target_link"
+                fi
+              fi
+            done
+          fi
+        fi
       "
     '';
   };
